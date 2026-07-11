@@ -153,9 +153,8 @@ casatlas/
 │   ├── modules/
 │   │   ├── auth/
 │   │   │   ├── index.ts              # Module barrel export
-│   │   │   ├── auth.ts               # Auth.js configuration
-│   │   │   ├── auth.config.ts        # Auth config (env-dependent)
-│   │   │   └── middleware.ts         # Route protection middleware
+│   │   │   ├── auth.ts               # Auth.js configuration (handlers, signIn, signOut, auth)
+│   │   │   └── auth.actions.ts       # Server Action wrappers (signOutAction, etc.)
 │   │   │
 │   │   ├── experiences/
 │   │   │   ├── index.ts
@@ -729,31 +728,12 @@ export const authConfig = {
 
 When `allowRegistration: false`, the `/register` page shows a message, and new OAuth logins that would create a new user are rejected at the callback.
 
-### Middleware
+### Route Protection
 
-```typescript
-// modules/auth/middleware.ts
-import { auth } from "@/lib/auth"
-import { NextResponse } from "next/server"
+Route protection happens in the `(dashboard)` layout (`src/app/(dashboard)/layout.tsx`), which calls `auth()` and redirects to `/login` if the session is missing. Each Server Component under `(dashboard)` inherits this guard.
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth
-  const isAuthPage = req.nextUrl.pathname.startsWith("/login") ||
-                     req.nextUrl.pathname.startsWith("/register")
+API routes (`src/app/api/**/route.ts`) and Server Actions each call `auth()` independently to check the session before performing any work.
 
-  if (isAuthPage && isLoggedIn) {
-    return NextResponse.redirect(new URL("/dashboard", req.url))
-  }
-
-  if (!isLoggedIn && !isAuthPage) {
-    return NextResponse.redirect(new URL("/login", req.url))
-  }
-})
-
-export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-}
-```
 
 ---
 

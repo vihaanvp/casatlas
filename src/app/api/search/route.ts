@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { auth } from "@/modules/auth/auth"
 import { prisma } from "@/lib/prisma"
 
@@ -21,25 +22,23 @@ export async function GET(request: NextRequest) {
     const userId = session.user.id
 
     // Always search experiences
-    const experienceWhere = role === "ADMIN"
-      ? { deletedAt: null, OR: [{ title: { contains: query, mode: "insensitive" as const } }, { description: { contains: query, mode: "insensitive" as const } }] }
+    const experienceWhere: Prisma.ExperienceWhereInput = role === "ADMIN"
+      ? { deletedAt: null, OR: [{ title: { contains: query, mode: "insensitive" } }, { description: { contains: query, mode: "insensitive" } }] }
       : role === "TEACHER"
         ? {
             deletedAt: null,
             user: { teachers: { some: { teacherId: userId } } },
-            OR: [{ title: { contains: query, mode: "insensitive" as const } }, { description: { contains: query, mode: "insensitive" as const } }],
+            OR: [{ title: { contains: query, mode: "insensitive" } }, { description: { contains: query, mode: "insensitive" } }],
           }
         : {
             userId,
             deletedAt: null,
-            OR: [{ title: { contains: query, mode: "insensitive" as const } }, { description: { contains: query, mode: "insensitive" as const } }],
+            OR: [{ title: { contains: query, mode: "insensitive" } }, { description: { contains: query, mode: "insensitive" } }],
           }
 
     const [experiences, users, comments] = await Promise.all([
       prisma.experience.findMany({
-        // ponytail: Prisma type inference struggles with complex OR
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        where: experienceWhere as any,
+        where: experienceWhere,
         select: {
           id: true,
           title: true,

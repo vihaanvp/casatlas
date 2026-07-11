@@ -16,7 +16,7 @@ CASAtlas needs a technology stack that supports:
 
 ## Decision
 
-- **Next.js 15** with App Router for full-stack React framework
+- **Next.js 16** with App Router for full-stack React framework
 - **TypeScript** for type safety
 - **Tailwind CSS 4** for utility-first styling
 - **Prisma** for type-safe ORM
