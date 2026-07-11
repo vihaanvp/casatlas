@@ -52,5 +52,10 @@
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@9.14.4",
+  "pnpm": {
+    "overrides": {
+      "postcss": "^8.5.10"
+    }
+  }
 }
