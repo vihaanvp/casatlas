@@ -4,6 +4,12 @@ import GitHub from "next-auth/providers/github"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 
+// Debug: log whether credentials are present (do not log the values)
+console.debug("[NextAuth] Google client ID present:", !!process.env.GOOGLE_CLIENT_ID)
+console.debug("[NextAuth] Google client secret present:", !!process.env.GOOGLE_CLIENT_SECRET)
+console.debug("[NextAuth] GitHub client ID present:", !!process.env.GITHUB_CLIENT_ID)
+console.debug("[NextAuth] GitHub client secret present:", !!process.env.GITHUB_CLIENT_SECRET)
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: (() => {
