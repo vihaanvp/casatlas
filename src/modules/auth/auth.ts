@@ -9,6 +9,7 @@ console.debug("[NextAuth] Google client ID present:", !!process.env.GOOGLE_CLIEN
 console.debug("[NextAuth] Google client secret present:", !!process.env.GOOGLE_CLIENT_SECRET)
 console.debug("[NextAuth] GitHub client ID present:", !!process.env.GITHUB_CLIENT_ID)
 console.debug("[NextAuth] GitHub client secret present:", !!process.env.GITHUB_CLIENT_SECRET)
+console.debug("[NextAuth] AUTH_TRUST_HOST:", process.env.AUTH_TRUST_HOST)
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
