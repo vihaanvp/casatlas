@@ -14,7 +14,7 @@ Thank you for your interest in contributing to CASAtlas! This guide will help yo
 
 1. Fork and clone the repository:
    ```bash
-   git clone https://github.com/your-username/casatlas.git
+   git clone https://github.com/vihaanvp/casatlas.git
    cd casatlas
    ```
 

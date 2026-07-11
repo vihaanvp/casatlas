@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/your-username/casatlas/actions"><img src="https://github.com/your-username/casatlas/workflows/CI/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/vihaanvp/casatlas/actions"><img src="https://github.com/vihaanvp/casatlas/workflows/CI/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
-  <a href="https://github.com/your-username/casatlas/releases"><img src="https://img.shields.io/github/v/release/your-username/casatlas?include_prereleases" alt="Release" /></a>
+  <a href="https://github.com/vihaanvp/casatlas/releases"><img src="https://img.shields.io/github/v/release/vihaanvp/casatlas?include_prereleases" alt="Release" /></a>
 </p>
 
 ---
@@ -65,7 +65,7 @@ CASAtlas is a self-hosted web application designed for IB Diploma Programme stud
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/casatlas.git
+git clone https://github.com/vihaanvp/casatlas.git
 cd casatlas
 
 # Install dependencies
@@ -88,7 +88,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/casatlas.git
+git clone https://github.com/vihaanvp/casatlas.git
 cd casatlas
 
 # Set up environment
