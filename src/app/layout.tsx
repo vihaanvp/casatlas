@@ -6,6 +6,19 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "CASAtlas",
   description: "Document and manage your IB CAS journey",
+  icons: [
+    {
+      url: "/favicon.svg",
+      type: "image/svg+xml",
+    },
+  ],
+  openGraph: {
+    images: [
+      {
+        url: "/social-preview.svg",
+      },
+    ],
+  },
 }
 
 export default function RootLayout({
