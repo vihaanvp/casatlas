@@ -44,6 +44,7 @@ If you're **modifying or contributing** to CASAtlas — or building a fork — t
 - **Security disclosures** — see [`SECURITY.md`](https://github.com/vihaanvp/casatlas/blob/main/SECURITY.md)
 - **License** — MIT (see [`LICENSE`](https://github.com/vihaanvp/casatlas/blob/main/LICENSE.md))
 - **Releases** — [GitHub Releases](https://github.com/vihaanvp/casatlas/releases) (Docker images are published to GHCR on every tag)
+- **General questions** — email the maintainer at [vihaan@vihaanvp.me](mailto:vihaan@vihaanvp.me)
 
 ---
 

@@ -8,7 +8,12 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability within CASAtlas, please report it privately via GitHub's [Security Advisories](https://github.com/vihaanvp/casatlas/security/advisories/new) tab, or open a private issue against this repository. All security vulnerabilities will be promptly addressed.
+If you discover a security vulnerability within CASAtlas, please report it privately through either of these channels:
+
+- **GitHub Security Advisories** (preferred) — open one via the [Security Advisories tab](https://github.com/vihaanvp/casatlas/security/advisories/new)
+- **Direct email** — [vihaan@vihaanvp.me](mailto:vihaan@vihaanvp.me) (PGP not mandatory; please describe the issue in the body of the first email so I know what we're working with)
+
+All security vulnerabilities will be promptly addressed.
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 

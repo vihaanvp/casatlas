@@ -137,6 +137,12 @@ If your error isn't on this list, see [Troubleshooting](Troubleshooting).
 
 ---
 
+## Need help?
+
+For general questions about OAuth setup not covered here, you can email the maintainer at [vihaan@vihaanvp.me](mailto:vihaan@vihaanvp.me). For security concerns, see [SECURITY.md](https://github.com/vihaanvp/casatlas/blob/main/SECURITY.md).
+
+---
+
 ## Where to go next
 
 - **Deploy with OAuth ready** → [Self-Hosting with Docker](Self-Hosting-with-Docker)

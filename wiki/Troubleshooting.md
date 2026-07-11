@@ -170,4 +170,5 @@ If you accidentally imported server-only code into a test, you'll hit "PrismaCli
 1. Search the [Issue tracker](https://github.com/vihaanvp/casatlas/issues) — someone has hit your error before.
 2. Read `docker compose logs app | tail -100` — paste (sanitized) error logs into the issue.
 3. Include your deployment type (Docker, from source), CASAtlas version (`git describe --tags`), OS, and what you were doing when it broke.
-4. For security, follow [SECURITY.md](https://github.com/vihaanvp/casatlas/blob/main/SECURITY.md), not the public tracker.
+4. For security, follow [SECURITY.md](https://github.com/vihaanvp/casatlas/blob/main/SECURITY.md) — both a GitHub advisory and direct email (`vihaan@vihaanvp.me`) are available.
+5. For non-security bugs where you'd rather not open a public issue, you can also email the maintainer directly at [vihaan@vihaanvp.me](mailto:vihaan@vihaanvp.me). Public issues are preferred so others learn from the answer.

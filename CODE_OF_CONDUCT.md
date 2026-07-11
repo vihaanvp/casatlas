@@ -59,7 +59,10 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by opening a confidential issue through GitHub's [private security reporting channel](https://github.com/vihaanvp/casatlas/security/advisories/new) for this repository.
+reported by any of:
+
+- Opening a confidential issue through GitHub's [private security reporting channel](https://github.com/vihaanvp/casatlas/security/advisories/new) for this repository
+- Emailing the project maintainer at [vihaan@vihaanvp.me](mailto:vihaan@vihaanvp.me)
 
 All complaints will be reviewed and investigated promptly and fairly.
 

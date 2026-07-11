@@ -2,6 +2,22 @@
   "name": "casatlas",
   "version": "0.1.0",
   "private": true,
+  "description": "A self-hosted CAS portfolio platform for IB Diploma Programme students.",
+  "author": {
+    "name": "Vihaan Parlikar",
+    "email": "vihaan@vihaanvp.me",
+    "url": "https://github.com/vihaanvp"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vihaanvp/casatlas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vihaanvp/casatlas/issues",
+    "email": "vihaan@vihaanvp.me"
+  },
+  "homepage": "https://github.com/vihaanvp/casatlas#readme",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
