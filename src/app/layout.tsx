@@ -6,6 +6,8 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "CASAtlas",
   description: "Document and manage your IB CAS journey",
+  // Set the base URL for resolving relative URLs in metadata (e.g., openGraph images)
+  metadataBase: process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL) : new URL("http://localhost:3000"),
   icons: [
     {
       url: "/favicon.svg",
