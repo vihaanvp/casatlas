@@ -10,7 +10,7 @@ import { getExperienceStats, getStrandProgress, getOutcomeProgress, getRecentDra
 import {
   BookOpen,
   Clock,
-  CheckCircle,
+  CircleCheck,
   Archive,
   PenLine,
   Plus,
@@ -55,7 +55,7 @@ async function StatsCards() {
     { label: "Total Experiences", value: stats.total, icon: BookOpen, detail: `${stats.totalHours} hours logged` },
     { label: "Drafts", value: stats.drafts, icon: PenLine, detail: "In progress" },
     { label: "Submitted", value: stats.submitted, icon: Clock, detail: "Awaiting review" },
-    { label: "Approved", value: stats.approved, icon: CheckCircle, detail: "Completed" },
+    { label: "Approved", value: stats.approved, icon: CircleCheck, detail: "Completed" },
     { label: "Archived", value: stats.archived, icon: Archive, detail: "Archived" },
   ]
 

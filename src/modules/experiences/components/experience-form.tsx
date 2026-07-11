@@ -23,7 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Save,
-  CheckCircle2,
+  CircleCheckBig,
   Loader2,
   Clock,
   FileUp,
@@ -84,7 +84,7 @@ function SaveStatusIndicator({ status, lastSaved }: { status: SaveStatus; lastSa
       )}
       {status === "saved" && (
         <>
-          <CheckCircle2 className="h-3 w-3 text-[var(--color-accent)]" />
+          <CircleCheckBig className="h-3 w-3 text-[var(--color-accent)]" />
           <span>{timeAgo ? `Last edited ${timeAgo}` : "Saved"}</span>
         </>
       )}
@@ -266,7 +266,7 @@ function ExperienceForm({ experience, mode }: ExperienceFormProps) {
                 )}
                 disabled={i > step}
               >
-                {i < step ? <CheckCircle2 className="h-3.5 w-3.5" /> : <span>{i + 1}</span>}
+                {i < step ? <CircleCheckBig className="h-3.5 w-3.5" /> : <span>{i + 1}</span>}
                 <span className="hidden sm:inline">{s}</span>
               </button>
               {i < STEPS.length - 1 && (
@@ -430,7 +430,7 @@ function ExperienceForm({ experience, mode }: ExperienceFormProps) {
                           ? "border-[var(--color-accent)] bg-[var(--color-accent)]"
                           : "border-[var(--color-border)]"
                       )}>
-                        {data.strands.includes(strand) && <CheckCircle2 className="h-3 w-3 text-white" />}
+                        {data.strands.includes(strand) && <CircleCheckBig className="h-3 w-3 text-white" />}
                       </div>
                       {CAS_STRAND_LABELS[strand]}
                     </label>
@@ -470,7 +470,7 @@ function ExperienceForm({ experience, mode }: ExperienceFormProps) {
                           ? "border-[var(--color-accent)] bg-[var(--color-accent)]"
                           : "border-[var(--color-border)]"
                       )}>
-                        {data.outcomes.includes(outcome) && <CheckCircle2 className="h-3 w-3 text-white" />}
+                        {data.outcomes.includes(outcome) && <CircleCheckBig className="h-3 w-3 text-white" />}
                       </div>
                       <span className="leading-tight">{outcome}</span>
                     </label>
