@@ -15,6 +15,7 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
+    "wiki:publish": "node scripts/publish-wiki.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {
