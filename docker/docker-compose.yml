@@ -3,18 +3,14 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    env_file:
+      - ../.env
     ports:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://casatlas:casatlas@db:5432/casatlas
-      AUTH_SECRET: ${AUTH_SECRET:-change-me-in-production}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
-      UPLOAD_DIR: /app/uploads
+      # AUTH_SECRET, NEXT_PUBLIC_APP_URL, NEXTAUTH_URL, etc. are loaded from .env
+      # but can be overridden here if needed
     volumes:
       - uploads_data:/app/uploads
     depends_on:
