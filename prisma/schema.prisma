@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
     provider = "postgresql"
+    url = env("DATABASE_URL")
 }
 
 // ─── Auth.js Models ───────────────────────────────────────
@@ -298,5 +299,6 @@ enum EvidenceType {
   PDF
   LINK
 }
+
 
 

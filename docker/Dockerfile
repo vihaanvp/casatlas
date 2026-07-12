@@ -9,7 +9,7 @@ COPY package.json pnpm-lock.yaml ./
 # ponytail: copy schema so postinstall (prisma generate) works
 COPY prisma/schema.prisma ./prisma/
 RUN pnpm install --frozen-lockfile
-RUN pnpm prisma generate
+    RUN DATABASE_URL="postgresql://user:password@localhost:5432/dummy" pnpm prisma generate
 
 # ─── Build ────────────────────────────────────────────────
 FROM base AS builder
