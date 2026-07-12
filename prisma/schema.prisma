@@ -2,7 +2,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {\n    provider = "postgresql"\n}
+datasource db {
+    provider = "postgresql"
+}
 
 // ─── Auth.js Models ───────────────────────────────────────
 
@@ -296,4 +298,5 @@ enum EvidenceType {
   PDF
   LINK
 }
+
 
