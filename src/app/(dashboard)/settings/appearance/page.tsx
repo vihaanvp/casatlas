@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PageHeader } from "@/components/shared/page-header"
 import { SettingsNav } from "../components/settings-nav"
 import { Button } from "@/components/ui/button"
+import { updateTheme } from "@/modules/settings/settings.actions"
 import { Moon, Sun, Monitor } from "lucide-react"
 import { toast } from "sonner"
 
@@ -16,6 +17,18 @@ export default function AppearancePage() {
     { value: "light", label: "Light", icon: Sun },
     { value: "system", label: "System", icon: Monitor },
   ] as const
+
+  const handleTheme = (value: string, label: string) => {
+    setTheme(value)
+    if (value === "system") {
+      // System is client-side only; DARK/LIGHT are persisted per-account.
+      toast.success("Theme set to system")
+      return
+    }
+    updateTheme(value.toUpperCase()).then((res) => {
+      toast.success(res.success ? `Theme set to ${label.toLowerCase()}` : (res.error ?? "Failed to save theme"))
+    })
+  }
 
   return (
     <div className="space-y-8">
@@ -36,10 +49,7 @@ export default function AppearancePage() {
                   <Button
                     key={t.value}
                     variant={theme === t.value ? "default" : "outline"}
-                    onClick={() => {
-                      setTheme(t.value)
-                      toast.success(`Theme set to ${t.label.toLowerCase()}`)
-                    }}
+                    onClick={() => handleTheme(t.value, t.label)}
                     className="flex items-center gap-2"
                   >
                     <t.icon className="h-4 w-4" />

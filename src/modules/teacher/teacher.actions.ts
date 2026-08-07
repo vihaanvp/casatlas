@@ -4,10 +4,20 @@ import { auth } from "@/modules/auth/auth"
 import { prisma } from "@/lib/prisma"
 import { auditLog } from "@/lib/audit"
 import { createNotification } from "@/lib/notifications"
+import { canAccessExperience } from "@/modules/experiences/experience.service"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import type { Role } from "@prisma/client"
 
 const idSchema = z.string().min(1, "ID is required")
+
+/** True if the teacher is assigned to the student. */
+async function isAssignedTo(teacherId: string, studentId: string): Promise<boolean> {
+  const assignment = await prisma.teacherStudent.findUnique({
+    where: { teacherId_studentId: { teacherId, studentId } },
+  })
+  return !!assignment
+}
 
 // ─── Teacher's Assigned Students ────────────────────────
 
@@ -82,8 +92,12 @@ export async function approveExperience(experienceId: string) {
   const parsedId = idSchema.safeParse(experienceId)
   if (!parsedId.success) throw new Error("Invalid experience ID")
 
-  const experience = await prisma.experience.findUnique({ where: { id: experienceId }, select: { userId: true, title: true } })
-  if (!experience) throw new Error("Experience not found")
+  const experience = await prisma.experience.findUnique({ where: { id: experienceId }, select: { userId: true, title: true, status: true, deletedAt: true } })
+  if (!experience || experience.deletedAt) throw new Error("Experience not found")
+  if (experience.status !== "SUBMITTED") throw new Error("Only submitted experiences can be approved")
+  if (session.user.role !== "ADMIN" && !(await isAssignedTo(session.user.id, experience.userId))) {
+    throw new Error("You are not assigned to this student")
+  }
 
   await prisma.experience.update({ where: { id: experienceId }, data: { status: "APPROVED" } })
 
@@ -113,8 +127,12 @@ export async function requestRevision(experienceId: string, reason: string) {
   const parsed = revisionSchema.safeParse({ experienceId, reason })
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input")
 
-  const experience = await prisma.experience.findUnique({ where: { id: experienceId }, select: { userId: true, title: true } })
-  if (!experience) throw new Error("Experience not found")
+  const experience = await prisma.experience.findUnique({ where: { id: experienceId }, select: { userId: true, title: true, status: true, deletedAt: true } })
+  if (!experience || experience.deletedAt) throw new Error("Experience not found")
+  if (experience.status !== "SUBMITTED") throw new Error("Only submitted experiences can be revised")
+  if (session.user.role !== "ADMIN" && !(await isAssignedTo(session.user.id, experience.userId))) {
+    throw new Error("You are not assigned to this student")
+  }
 
   await prisma.experience.update({ where: { id: experienceId }, data: { status: "NEEDS_REVISION" } })
 
@@ -146,14 +164,28 @@ export async function addComment(experienceId: string, content: string, parentId
   const parsed = commentSchema.safeParse({ experienceId, content, parentId })
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input")
 
+  // Owner, assigned teacher, or admin may comment.
+  const experience = await prisma.experience.findUnique({ where: { id: experienceId }, select: { userId: true, deletedAt: true, title: true } })
+  if (!experience || experience.deletedAt) throw new Error("Experience not found")
+  if (!(await canAccessExperience(experienceId, session.user.id, session.user.role as Role))) {
+    throw new Error("You do not have access to this experience")
+  }
+
+  // Parent reply must belong to the same experience.
+  if (parsed.data.parentId) {
+    const parent = await prisma.comment.findUnique({ where: { id: parsed.data.parentId }, select: { experienceId: true } })
+    if (!parent || parent.experienceId !== experienceId) {
+      throw new Error("Parent comment not found")
+    }
+  }
+
   const comment = await prisma.comment.create({
     data: { experienceId, userId: session.user.id, content: parsed.data.content, parentId: parsed.data.parentId ?? null },
     include: { user: { select: { id: true, name: true, email: true, image: true } } },
   })
 
   // Notify experience owner if commenter is not the owner
-  const experience = await prisma.experience.findUnique({ where: { id: experienceId }, select: { userId: true, title: true } })
-  if (experience && experience.userId !== session.user.id) {
+  if (experience.userId !== session.user.id) {
     await createNotification({
       userId: experience.userId,
       type: "TEACHER_COMMENT",
@@ -172,6 +204,12 @@ export async function addComment(experienceId: string, content: string, parentId
 export async function getComments(experienceId: string) {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
+
+  const experience = await prisma.experience.findUnique({ where: { id: experienceId }, select: { userId: true, deletedAt: true } })
+  if (!experience || experience.deletedAt) throw new Error("Experience not found")
+  if (!(await canAccessExperience(experienceId, session.user.id, session.user.role as Role))) {
+    throw new Error("You do not have access to this experience")
+  }
 
   return prisma.comment.findMany({
     where: { experienceId, parentId: null },

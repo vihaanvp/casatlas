@@ -46,7 +46,8 @@ function renderMarkdownPreview(md: string): string {
     try {
       const parsed = new URL(url)
       if (["http:", "https:", "mailto:"].includes(parsed.protocol)) {
-        return url
+        // parsed.href percent-encodes quotes/control chars, blocking attribute-injection XSS
+        return parsed.href
       }
     } catch {
       // Not a valid URL — block it

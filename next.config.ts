@@ -42,6 +42,11 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  // Stop Next from inferring C:\Users\ASUS as the workspace root (a stray
+  // package-lock.json up there was picked over this repo's pnpm-lock.yaml).
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },

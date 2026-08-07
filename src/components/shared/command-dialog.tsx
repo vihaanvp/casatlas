@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Search, FileText, ArrowRight, User, MessageSquare } from "lucide-react"
+import { Search, FileText, ArrowRight, MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { EXPERIENCE_STATUS_LABELS, EXPERIENCE_STATUS_COLORS, CAS_STRAND_LABELS } from "@/lib/constants"
 import type { ExperienceStatus, Strand } from "@prisma/client"
@@ -13,13 +13,6 @@ type ExperienceResult = {
   status: ExperienceStatus
   strands: { strand: Strand }[]
   date: string
-}
-
-type UserResult = {
-  id: string
-  name: string | null
-  email: string | null
-  role: string
 }
 
 type CommentResult = {
@@ -38,7 +31,6 @@ function CommandDialog({ open, onOpenChange }: CommandDialogProps) {
   const router = useRouter()
   const [query, setQuery] = React.useState("")
   const [experiences, setExperiences] = React.useState<ExperienceResult[]>([])
-  const [users, setUsers] = React.useState<UserResult[]>([])
   const [comments, setComments] = React.useState<CommentResult[]>([])
   const [loading, setLoading] = React.useState(false)
   const [selectedIndex, setSelectedIndex] = React.useState(0)
@@ -47,19 +39,17 @@ function CommandDialog({ open, onOpenChange }: CommandDialogProps) {
 
   // Combine all results for navigation
   const allResults = React.useMemo(() => {
-    const items: Array<{ type: "experience" | "user" | "comment"; id: string; href: string }> = []
+    const items: Array<{ type: "experience" | "comment"; id: string; href: string }> = []
     for (const e of experiences) items.push({ type: "experience", id: e.id, href: `/experiences/${e.id}` })
-    for (const u of users) items.push({ type: "user", id: u.id, href: `/settings/profile` })
     for (const c of comments) items.push({ type: "comment", id: c.id, href: `/experiences/${c.experienceId}` })
     return items
-  }, [experiences, users, comments])
+  }, [experiences, comments])
 
   // Focus input on open
   React.useEffect(() => {
     if (open) {
       setQuery("")
       setExperiences([])
-      setUsers([])
       setComments([])
       setSelectedIndex(0)
       setTimeout(() => inputRef.current?.focus(), 50)
@@ -73,7 +63,6 @@ function CommandDialog({ open, onOpenChange }: CommandDialogProps) {
 
     if (!value.trim()) {
       setExperiences([])
-      setUsers([])
       setComments([])
       setLoading(false)
       return
@@ -86,7 +75,6 @@ function CommandDialog({ open, onOpenChange }: CommandDialogProps) {
         if (res.ok) {
           const data = await res.json()
           setExperiences(data.experiences ?? [])
-          setUsers(data.users ?? [])
           setComments(data.comments ?? [])
           setSelectedIndex(0)
         }
@@ -198,37 +186,6 @@ function CommandDialog({ open, onOpenChange }: CommandDialogProps) {
                             </div>
                           </div>
                           <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" />
-                        </button>
-                      )
-                    })}
-                  </>
-                )}
-
-                {/* Users */}
-                {users.length > 0 && (
-                  <>
-                    <p className="px-3 py-1 text-[10px] font-medium uppercase text-[var(--color-text-muted)] mt-2">Users</p>
-                    {users.map((user) => {
-                      const idx = allResults.findIndex((r) => r.type === "user" && r.id === user.id)
-                      return (
-                        <button
-                          key={user.id}
-                          onClick={() => {
-                            router.push(`/settings/profile`)
-                            onOpenChange(false)
-                          }}
-                          className={cn(
-                            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-                            idx === selectedIndex
-                              ? "bg-[var(--color-accent-muted)] text-[var(--color-accent)]"
-                              : "text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
-                          )}
-                        >
-                          <User className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium truncate">{user.name ?? "Unnamed"}</p>
-                            <p className="text-[10px] text-[var(--color-text-muted)]">{user.email} · {user.role}</p>
-                          </div>
                         </button>
                       )
                     })}

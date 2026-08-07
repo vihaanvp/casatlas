@@ -23,6 +23,8 @@ export function UserManagement() {
   const [users, setUsers] = useState<UserRow[]>([])
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState<Role | "">("")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
   const [searchVersion, setSearchVersion] = useState(0)
 
@@ -32,11 +34,15 @@ export function UserManagement() {
       setLoading(true)
       try {
         const result = await getUsers({
+          page,
           pageSize: 50,
           role: roleFilter || undefined,
           search: search || undefined,
         })
-        if (!cancelled) setUsers(result.users as UserRow[])
+        if (!cancelled) {
+          setUsers(result.users as UserRow[])
+          setTotalPages(result.totalPages)
+        }
       } catch {
         if (!cancelled) toast.error("Failed to load users")
       } finally {
@@ -45,7 +51,7 @@ export function UserManagement() {
     }
     loadUsers()
     return () => { cancelled = true }
-  }, [roleFilter, searchVersion]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [roleFilter, searchVersion, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleRoleChange(userId: string, newRole: Role) {
     try {
@@ -69,7 +75,7 @@ export function UserManagement() {
         />
         <select
           value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value as Role | "")}
+          onChange={(e) => { setRoleFilter(e.target.value as Role | ""); setPage(1) }}
           className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)]"
         >
           <option value="">All Roles</option>
@@ -77,7 +83,7 @@ export function UserManagement() {
           <option value="TEACHER">Teacher</option>
           <option value="ADMIN">Admin</option>
         </select>
-        <Button onClick={() => setSearchVersion((v) => v + 1)} variant="outline" size="sm">Search</Button>
+        <Button onClick={() => { setSearchVersion((v) => v + 1); setPage(1) }} variant="outline" size="sm">Search</Button>
       </div>
 
       {loading ? (
@@ -112,6 +118,18 @@ export function UserManagement() {
             </div>
           ))}
         </Card>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+            Previous
+          </Button>
+          <span className="text-sm text-[var(--color-text-muted)]">Page {page} of {totalPages}</span>
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages}>
+            Next
+          </Button>
+        </div>
       )}
     </div>
   )

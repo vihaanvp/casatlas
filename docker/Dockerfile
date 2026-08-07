@@ -1,27 +1,28 @@
-# ─── Build Stage ───────────────────────────────────────────
+# ��� Build Stage �������������������������������������������
 FROM node:20-alpine AS base
 RUN corepack enable
 
-# ─── Dependencies ─────────────────────────────────────────
+# ��� Dependencies �����������������������������������������
 FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-# ponytail: copy schema so postinstall (prisma generate) works
+# ponytail: copy schema + config so postinstall (prisma generate) works
 COPY prisma/schema.prisma ./prisma/
+COPY prisma.config.ts ./
 RUN pnpm install --frozen-lockfile
 RUN DATABASE_URL="postgresql://user:password@localhost:5432/dummy" pnpm prisma generate
 
-# ─── Build ────────────────────────────────────────────────
+# ��� Build ������������������������������������������������
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
-
+ENV DATABASE_URL="postgresql://user:password@localhost:5432/dummy"
 RUN pnpm build
 
-# ─── Production ───────────────────────────────────────────
+# ��� Production �������������������������������������������
 FROM base AS runner
 WORKDIR /app
 
@@ -36,6 +37,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/next.config.ts ./
 
@@ -48,5 +50,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# ---- NEW: run migrations then start the app ----
-CMD ["sh", "-c", "pnpx prisma migrate deploy && node_modules/.bin/next start"]
+# ---- run migrations then start the app ----
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/next start"]

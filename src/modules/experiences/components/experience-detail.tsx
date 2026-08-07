@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { formatDate, formatDuration } from "@/lib/utils"
+import { formatDate, formatDuration, formatExperienceDate } from "@/lib/utils"
 import { EvidenceGallery } from "./evidence-gallery"
 import { submitExperience, deleteExperience } from "../experience.actions"
 import { approveExperience, requestRevision } from "@/modules/teacher/teacher.actions"
@@ -75,6 +75,7 @@ interface ExperienceDetailProps {
   }
   comments?: CommentData[]
   isReviewer?: boolean
+  isOwner?: boolean
   currentUserId?: string
 }
 
@@ -97,7 +98,7 @@ function MarkdownContent({ content }: { content: string }) {
   )
 }
 
-function ExperienceDetail({ experience, comments = [], isReviewer = false, currentUserId }: ExperienceDetailProps) {
+function ExperienceDetail({ experience, comments = [], isReviewer = false, isOwner = false, currentUserId }: ExperienceDetailProps) {
   const router = useRouter()
   const [submitting, setSubmitting] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
@@ -190,13 +191,13 @@ function ExperienceDetail({ experience, comments = [], isReviewer = false, curre
             </span>
           </div>
           <time className="block text-sm text-[var(--color-text-secondary)]" dateTime={new Date(experience.date).toISOString()}>
-            {formatDate(experience.date)}
+            {formatExperienceDate(experience.date)}
           </time>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Student actions */}
-          {(experience.status === "DRAFT" || experience.status === "NEEDS_REVISION") && (
+          {/* Student actions — owner only */}
+          {isOwner && (experience.status === "DRAFT" || experience.status === "NEEDS_REVISION") && (
             <>
               <Link href={`/experiences/${experience.id}/edit`}>
                 <Button variant="outline" size="sm">
@@ -211,8 +212,8 @@ function ExperienceDetail({ experience, comments = [], isReviewer = false, curre
             </>
           )}
 
-          {/* Teacher review actions */}
-          {isReviewer && experience.status === "SUBMITTED" && (
+          {/* Teacher review actions — not shown to the owner */}
+          {isReviewer && !isOwner && experience.status === "SUBMITTED" && (
             <>
               <Button size="sm" onClick={handleApprove} disabled={approving} className="bg-emerald-600 hover:bg-emerald-700">
                 <Check className="h-4 w-4" />
@@ -225,9 +226,11 @@ function ExperienceDetail({ experience, comments = [], isReviewer = false, curre
             </>
           )}
 
-          <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleting}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {isOwner && (
+            <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleting} aria-label="Delete experience">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 

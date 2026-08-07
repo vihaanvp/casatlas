@@ -18,19 +18,23 @@ function isAllowed(mimeType: string): boolean {
   )
 }
 
+const EXT_MIME_MAP: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/gif": "gif",
+  "image/webp": "webp",
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "application/pdf": "pdf",
+}
+const KNOWN_EXTENSIONS = new Set(Object.values(EXT_MIME_MAP))
+
 function getExtension(filename: string, mimeType: string): string {
   const fromName = filename.split(".").pop()?.toLowerCase()
-  if (fromName && fromName.length <= 4) return fromName
-  const map: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/gif": "gif",
-    "image/webp": "webp",
-    "video/mp4": "mp4",
-    "video/webm": "webm",
-    "application/pdf": "pdf",
-  }
-  return map[mimeType] ?? "bin"
+  // Only trust a filename extension that matches a known type; otherwise
+  // derive from the declared MIME so .html/.svg can't masquerade as media.
+  if (fromName && KNOWN_EXTENSIONS.has(fromName)) return fromName
+  return EXT_MIME_MAP[mimeType] ?? "bin"
 }
 
 export async function POST(request: Request) {

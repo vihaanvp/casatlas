@@ -12,6 +12,28 @@ export default function LoginPage() {
         <CardDescription>Sign in to your account to continue</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {authConfig.providers.credentials.enabled && (
+          <form
+            action={async (formData: FormData) => {
+              "use server"
+              const email = String(formData.get("email") ?? "")
+              await signIn("credentials", { email, redirectTo: "/dashboard" })
+            }}
+            className="space-y-2"
+          >
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="user@example.com"
+              className="h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+            />
+            <Button type="submit" variant="outline" className="w-full" size="lg">
+              Sign in with email (dev)
+            </Button>
+          </form>
+        )}
+
         {authConfig.providers.google.enabled && (
           <form
             action={async () => {
@@ -59,11 +81,13 @@ export default function LoginPage() {
           </form>
         )}
 
-        {!authConfig.providers.google.enabled && !authConfig.providers.github.enabled && (
-          <p className="text-center text-sm text-[var(--color-text-muted)]">
-            No authentication providers configured. Set GOOGLE_CLIENT_ID or GITHUB_CLIENT_ID.
-          </p>
-        )}
+        {!authConfig.providers.google.enabled &&
+          !authConfig.providers.github.enabled &&
+          !authConfig.providers.credentials.enabled && (
+            <p className="text-center text-sm text-[var(--color-text-muted)]">
+              No authentication providers configured. Set GOOGLE_CLIENT_ID or GITHUB_CLIENT_ID.
+            </p>
+          )}
 
         <div className="text-center text-sm text-[var(--color-text-muted)]">
           {authConfig.allowRegistration ? (

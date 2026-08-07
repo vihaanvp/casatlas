@@ -16,15 +16,17 @@ describe("cn", () => {
 })
 
 describe("formatDate", () => {
+  // Use local-noon Date objects so results are stable across timezones
+  // (new Date("YYYY-MM-DD") parses as UTC midnight and shifts by offset).
   it("formats a date string", () => {
-    const result = formatDate("2024-01-15")
+    const result = formatDate("2024-01-15T12:00:00")
     expect(result).toContain("January")
     expect(result).toContain("15")
     expect(result).toContain("2024")
   })
 
   it("formats a Date object", () => {
-    const result = formatDate(new Date("2024-06-20"))
+    const result = formatDate(new Date(2024, 5, 20, 12))
     expect(result).toContain("June")
     expect(result).toContain("20")
   })

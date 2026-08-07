@@ -31,12 +31,14 @@ export default async function ExperienceDetailPage({
   if (!experience) notFound()
 
   const isReviewer = session?.user && (session.user.role === "TEACHER" || session.user.role === "ADMIN")
+  const isOwner = experience.userId === session?.user?.id
 
   return (
     <ExperienceDetail
       experience={experience}
       comments={comments}
       isReviewer={!!isReviewer}
+      isOwner={!!isOwner}
       currentUserId={session?.user?.id}
     />
   )

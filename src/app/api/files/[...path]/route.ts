@@ -1,5 +1,7 @@
 import { auth } from "@/modules/auth/auth"
 import { storage } from "@/modules/uploads"
+import { canAccessExperience } from "@/modules/experiences/experience.service"
+import type { Role } from "@prisma/client"
 import { NextResponse } from "next/server"
 
 const MIME_MAP: Record<string, string> = {
@@ -26,8 +28,10 @@ export async function GET(
     const { path } = await params
     const key = path.join("/")
 
-    // Path must start with the requesting user's ID
-    if (path[0] !== session.user.id) {
+    // Owner, admin, or teacher assigned to the student may view evidence.
+    // Key format is {userId}/{experienceId}/{...}.
+    const allowed = await canAccessExperience(path[1] ?? "", session.user.id, session.user.role as Role)
+    if (!allowed) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

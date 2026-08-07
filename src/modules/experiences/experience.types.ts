@@ -40,7 +40,8 @@ export const experienceDraftSchema = z.object({
 export const experienceSearchSchema = z.object({
   query: z.string().optional(),
   status: z.enum(["DRAFT", "SUBMITTED", "APPROVED", "NEEDS_REVISION", "ARCHIVED"]).optional(),
-  strand: z.enum(["CREATIVITY", "ACTIVITY", "SERVICE"]).optional(),
+  // Comma-separated strands: "CREATIVITY,ACTIVITY"
+  strand: z.string().optional(),
   outcome: z.string().optional(),
   sortBy: z.enum(["date", "title", "createdAt", "updatedAt"]).default("date"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),

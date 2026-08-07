@@ -48,7 +48,7 @@ CASAtlas is a self-hosted web application designed for IB Diploma Programme stud
 | Framework | [Next.js 16](https://nextjs.org/) (App Router) |
 | Language | [TypeScript 5.8](https://www.typescriptlang.org/) |
 | UI | [React 19](https://react.dev/) + [Tailwind CSS 4](https://tailwindcss.com/) |
-| Database | [PostgreSQL 16](https://www.postgresql.org/) + [Prisma 6](https://www.prisma.io/) |
+| Database | [PostgreSQL 16](https://www.postgresql.org/) + [Prisma 7](https://www.prisma.io/) |
 | Authentication | [Auth.js v5](https://authjs.dev/) (NextAuth) |
 | Testing | [Vitest](https://vitest.dev/) |
 | Deployment | [Docker](https://www.docker.com/) + Docker Compose |
@@ -86,20 +86,36 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Docker Deployment
 
-```bash
-# Clone the repository
-git clone https://github.com/vihaanvp/casatlas.git
-cd casatlas
+The app ships as a Docker image with `docker-compose.yml` (PostgreSQL 16 + app). From the repo root:
 
+```bash
 # Set up environment
 cp .env.example .env
+# Edit .env: set DATABASE_URL to point at the container's DB if needed,
+# and set a real AUTH_SECRET (openssl rand -base64 32).
 
 # Start with Docker Compose
 cd docker
 docker compose up -d
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000).
+The application will be available at [http://localhost:3000](http://localhost:3000). Migrations run automatically on container start.
+
+### Deploying without Docker
+
+1. Provision PostgreSQL 16.
+2. `cp .env.example .env` and set `DATABASE_URL`, `AUTH_SECRET`, `NEXT_PUBLIC_APP_URL`, and OAuth credentials.
+3. `pnpm install`, then apply the schema:
+   ```bash
+   pnpm prisma migrate deploy
+   pnpm db:seed          # optional: demo accounts
+   ```
+4. Build and start:
+   ```bash
+   pnpm build
+   pnpm start
+   ```
+   If you deploy behind a reverse proxy or on a non-localhost hostname, set `AUTH_TRUST_HOST=true` (see [Configuration](#configuration)) — Auth.js v5 requires trusting the host in production.
 
 ## Configuration
 
@@ -124,6 +140,8 @@ CASAtlas is configured via environment variables. See [`.env.example`](.env.exam
    openssl rand -base64 32
    ```
 
+4. **Production hardening:** leave `AUTH_DEV_LOGIN` unset or `false`. When it is `true`, the login page shows a passwordless "Sign in with email" form that signs in as **any** user whose email exists in the database — **do not enable it in production**.
+
 ### Environment Variables
 
 | Variable | Description | Default |
@@ -135,7 +153,10 @@ CASAtlas is configured via environment variables. See [`.env.example`](.env.exam
 | `GITHUB_CLIENT_ID` | GitHub OAuth client ID | — |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | — |
 | `NEXT_PUBLIC_APP_URL` | Application URL | `http://localhost:3000` |
+| `NEXTAUTH_URL` | Canonical Auth.js URL (only needed if different from `NEXT_PUBLIC_APP_URL`) | — |
 | `ALLOW_REGISTRATION` | Enable public registration | `true` |
+| `AUTH_TRUST_HOST` | Trust the hostname Auth.js receives (`true` for proxies / non-localhost). **Production:** set it | `false` |
+| `AUTH_DEV_LOGIN` | Dev-only passwordless email login. **Never enable in production** | `false` |
 | `UPLOAD_DIR` | File upload directory | `./uploads` |
 
 ## Project Structure

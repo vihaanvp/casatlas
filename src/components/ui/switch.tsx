@@ -20,8 +20,8 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
           checked ? "bg-[var(--color-accent)]" : "bg-[var(--color-surface-hover)]",
           className
         )}
-        onClick={() => onCheckedChange?.(!checked)}
         {...props}
+        onClick={() => onCheckedChange?.(!checked)}
       >
         <span
           className={cn(

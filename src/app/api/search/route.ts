@@ -21,20 +21,29 @@ export async function GET(request: NextRequest) {
     const role = session.user.role
     const userId = session.user.id
 
-    // Always search experiences
+    // Teachers see their assigned students' experiences AND their own.
     const experienceWhere: Prisma.ExperienceWhereInput = role === "ADMIN"
       ? { deletedAt: null, OR: [{ title: { contains: query, mode: "insensitive" } }, { description: { contains: query, mode: "insensitive" } }] }
       : role === "TEACHER"
         ? {
             deletedAt: null,
-            user: { teachers: { some: { teacherId: userId } } },
-            OR: [{ title: { contains: query, mode: "insensitive" } }, { description: { contains: query, mode: "insensitive" } }],
+            OR: [
+              { user: { teachers: { some: { teacherId: userId } } } },
+              { userId },
+            ],
+            AND: { OR: [{ title: { contains: query, mode: "insensitive" } }, { description: { contains: query, mode: "insensitive" } }] },
           }
         : {
             userId,
             deletedAt: null,
             OR: [{ title: { contains: query, mode: "insensitive" } }, { description: { contains: query, mode: "insensitive" } }],
           }
+
+    // Comment search: teachers/admins scoped to assigned students' experiences.
+    const commentExperienceScope: Prisma.ExperienceWhereInput =
+      role === "ADMIN" ? { deletedAt: null }
+      : role === "TEACHER" ? { deletedAt: null, OR: [{ user: { teachers: { some: { teacherId: userId } } } }, { userId }] }
+      : { userId, deletedAt: null }
 
     const [experiences, users, comments] = await Promise.all([
       prisma.experience.findMany({
@@ -66,7 +75,7 @@ export async function GET(request: NextRequest) {
       prisma.comment.findMany({
         where: {
           content: { contains: query, mode: "insensitive" },
-          ...(role === "STUDENT" ? { experience: { userId } } : {}),
+          experience: commentExperienceScope,
         },
         select: {
           id: true,

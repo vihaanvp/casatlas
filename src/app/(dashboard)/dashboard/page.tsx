@@ -150,7 +150,7 @@ async function ProgressSection() {
           <p className="text-xs text-[var(--color-text-muted)]">
             {outcomeProgress?.completed === 0
               ? "Submit experiences with learning outcomes to track progress"
-              : `${outcomeProgress?.total ?? 7 - (outcomeProgress?.completed ?? 0)} outcomes remaining`}
+              : `${(outcomeProgress?.total ?? 7) - (outcomeProgress?.completed ?? 0)} outcomes remaining`}
           </p>
         </CardContent>
       </Card>

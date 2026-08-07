@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
-import { formatDateShort } from "@/lib/utils"
+import { formatExperienceDate } from "@/lib/utils"
 import { EXPERIENCE_STATUS_LABELS, EXPERIENCE_STATUS_COLORS, CAS_STRAND_LABELS } from "@/lib/constants"
 import type { ExperienceStatus } from "@prisma/client"
 import { Calendar, BookOpen, Paperclip, Clock } from "lucide-react"
@@ -71,7 +71,7 @@ function ExperienceCard({ experience, className }: ExperienceCardProps) {
           <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
             <Calendar className="h-3.5 w-3.5" />
             <time dateTime={new Date(experience.date).toISOString()}>
-              {formatDateShort(experience.date)}
+              {formatExperienceDate(experience.date)}
             </time>
           </div>
 

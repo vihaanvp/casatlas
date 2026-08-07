@@ -57,7 +57,7 @@ export default async function TeacherDashboardPage() {
                       {exp.title}
                     </Link>
                     <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                      by {exp.user.name ?? exp.user.email} · {new Date(exp.date).toLocaleDateString()}
+                      by {exp.user.name ?? exp.user.email} · {new Date(exp.date).toLocaleDateString("en-US", { timeZone: "UTC" })}
                     </p>
                     <div className="flex gap-1 mt-2 flex-wrap">
                       {exp.strands.map((s: { strand: Strand }) => (

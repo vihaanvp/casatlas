@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { formatDate } from "@/lib/utils"
+import { formatExperienceDate } from "@/lib/utils"
 import { EXPERIENCE_STATUS_LABELS, EXPERIENCE_STATUS_COLORS, CAS_STRAND_LABELS } from "@/lib/constants"
 import type { ExperienceStatus } from "@prisma/client"
 
@@ -66,7 +66,7 @@ function ExperienceTimeline({ experiences, className }: ExperienceTimelineProps)
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-muted)]">
                 <time dateTime={new Date(exp.date).toISOString()}>
-                  {formatDate(exp.date)}
+                  {formatExperienceDate(exp.date)}
                 </time>
                 <span
                   className={cn(

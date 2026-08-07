@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+Dockerfile
+docker/
+.git
+.gitignore
+.next
+out
+.coverage
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+logs
+*.log

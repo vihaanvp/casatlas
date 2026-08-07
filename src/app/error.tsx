@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 
 export default function Error({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string }
@@ -16,7 +16,7 @@ export default function Error({
         Something went wrong
       </h1>
       <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-        {error.message || "An unexpected error occurred"}
+        An unexpected error occurred. Please try again.
       </p>
       <Button onClick={reset} className="mt-6">
         Try again

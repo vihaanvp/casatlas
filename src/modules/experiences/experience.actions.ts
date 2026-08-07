@@ -4,10 +4,12 @@ import { auth } from "@/modules/auth/auth"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auditLog } from "@/lib/audit"
+import { createNotification } from "@/lib/notifications"
 import * as experienceService from "./experience.service"
 import {
   experienceCreateSchema,
   experienceDraftSchema,
+  experienceSearchSchema,
   type ExperienceCreateInput,
   type ExperienceDraftInput,
   type ExperienceSearchParams,
@@ -19,7 +21,7 @@ import { z } from "zod"
 // ─── Create ───────────────────────────────────────────────
 
 export async function createExperience(
-  data: ExperienceCreateInput
+  data: ExperienceCreateInput & { draftId?: string }
 ): Promise<ActionResult<Experience>> {
   try {
     const session = await auth()
@@ -38,15 +40,17 @@ export async function createExperience(
       return { success: false, error: "Validation failed", fieldErrors }
     }
 
-    const experience = await experienceService.createExperience(session.user.id, {
-      ...parsed.data,
-      date: new Date(parsed.data.date),
-    })
+    const experience = await experienceService.createExperience(
+      session.user.id,
+      {
+        ...parsed.data,
+        date: new Date(parsed.data.date),
+      },
+      data.draftId
+    )
 
     auditLog({ userId: session.user.id, action: "EXPERIENCE_CREATED", entity: "Experience", entityId: experience.id })
 
-    revalidatePath("/experiences")
-    revalidatePath("/dashboard")
     return { success: true, data: experience }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create experience"
@@ -86,9 +90,6 @@ export async function updateExperience(
       date: new Date(parsed.data.date),
     })
 
-    revalidatePath("/experiences")
-    revalidatePath(`/experiences/${id}`)
-    revalidatePath("/dashboard")
     return { success: true, data: experience }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update experience"
@@ -165,13 +166,39 @@ export async function submitExperience(
       return { success: false, error: "Invalid experience ID" }
     }
 
+    // Only DRAFT and NEEDS_REVISION experiences can be (re)submitted.
+    const existing = await prisma.experience.findFirst({
+      where: { id, userId: session.user.id, deletedAt: null },
+      select: { status: true, title: true },
+    })
+    if (!existing) return { success: false, error: "Experience not found" }
+    if (!["DRAFT", "NEEDS_REVISION"].includes(existing.status)) {
+      return { success: false, error: "Only drafts and experiences needing revision can be submitted" }
+    }
+
     await experienceService.updateExperienceStatus(id, session.user.id, "SUBMITTED")
 
     auditLog({ userId: session.user.id, action: "EXPERIENCE_SUBMITTED", entity: "Experience", entityId: id })
 
+    // Notify assigned teachers that a student submitted an experience.
+    const assignments = await prisma.teacherStudent.findMany({
+      where: { studentId: session.user.id },
+      select: { teacherId: true },
+    })
+    for (const a of assignments) {
+      await createNotification({
+        userId: a.teacherId,
+        type: "ANNOUNCEMENT",
+        title: "Experience Submitted",
+        message: `${session.user.name ?? "A student"} submitted "${existing.title}" for review.`,
+        link: `/experiences/${id}`,
+      })
+    }
+
     revalidatePath("/experiences")
     revalidatePath(`/experiences/${id}`)
     revalidatePath("/dashboard")
+    revalidatePath("/teacher")
     return { success: true, data: undefined }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to submit experience"
@@ -213,17 +240,19 @@ export async function saveExperienceDraft(
         return { success: false, error: "Draft not found" }
       }
 
+      // Empty strings clear the field (null); absent fields are left untouched.
+      const orNull = (v: string | undefined) => (v === "" ? null : v)
       const updated = await prisma.experience.update({
         where: { id: draftId },
         data: {
           title: draftData.title || undefined,
           date: draftData.date ? new Date(draftData.date) : undefined,
-          description: draftData.description,
-          reflection: draftData.reflection,
-          supervisor: draftData.supervisor,
+          description: orNull(draftData.description),
+          reflection: orNull(draftData.reflection),
+          supervisor: orNull(draftData.supervisor),
           hours: draftData.hours,
-          location: draftData.location,
-          notes: draftData.notes,
+          location: orNull(draftData.location),
+          notes: orNull(draftData.notes),
           isGroup: draftData.isGroup,
           strands: draftData.strands !== undefined
             ? {
@@ -267,7 +296,6 @@ export async function saveExperienceDraft(
       },
     })
 
-    revalidatePath("/experiences")
     return { success: true, data: { id: created.id } }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to save draft"
@@ -283,14 +311,11 @@ export async function getExperiences(
   const session = await auth()
   if (!session?.user?.id) return []
 
-  return experienceService.getExperiences(session.user.id, {
-    query: params?.query,
-    status: params?.status,
-    strand: params?.strand,
-    outcome: params?.outcome,
-    sortBy: params?.sortBy ?? "date",
-    sortOrder: params?.sortOrder ?? "desc",
-  })
+  // Validate/normalize URL params so invalid values don't 500.
+  const parsed = experienceSearchSchema.safeParse(params ?? {})
+  if (!parsed.success) return []
+
+  return experienceService.getExperiences(session.user.id, parsed.data)
 }
 
 export async function getExperience(id: string) {
@@ -301,6 +326,24 @@ export async function getExperience(id: string) {
     return await experienceService.getExperience(id, session.user.id, session.user.role)
   } catch {
     return null
+  }
+}
+
+export async function getEvidence(experienceId: string) {
+  const session = await auth()
+  if (!session?.user?.id) return []
+
+  try {
+    if (!(await experienceService.canAccessExperience(experienceId, session.user.id, session.user.role))) {
+      return []
+    }
+    const experience = await prisma.experience.findUnique({
+      where: { id: experienceId },
+      select: { evidence: { orderBy: { createdAt: "desc" } } },
+    })
+    return experience?.evidence ?? []
+  } catch {
+    return []
   }
 }
 

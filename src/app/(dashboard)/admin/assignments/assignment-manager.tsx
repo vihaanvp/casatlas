@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { assignStudents, getUsers, getTeachers } from "@/modules/admin/admin.actions"
+import { assignStudents, getAllStudents, getTeachers, getTeacherAssignments } from "@/modules/admin/admin.actions"
 import { toast } from "sonner"
 
 interface Teacher { id: string; name: string | null; email: string | null; _count: { assignedStudents: number } }
@@ -15,16 +15,38 @@ export function AssignmentManager() {
   const [selectedTeacher, setSelectedTeacher] = useState<string>("")
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [loadingAssignments, setLoadingAssignments] = useState(false)
 
   useEffect(() => {
     async function load() {
-      const [t, s] = await Promise.all([getTeachers(), getUsers({ role: "STUDENT", pageSize: 200 })])
+      const [t, s] = await Promise.all([getTeachers(), getAllStudents()])
       setTeachers(t as Teacher[])
-      setStudents(s.users as Student[])
+      setStudents(s as Student[])
       setLoading(false)
     }
     load()
   }, [])
+
+  // Preload the selected teacher's current assignments so the checklist shows
+  // what's already assigned instead of defaulting to empty (which read as
+  // "assign from scratch" and wiped the roster on save).
+  useEffect(() => {
+    if (!selectedTeacher) {
+      setSelectedStudents(new Set())
+      return
+    }
+    let cancelled = false
+    setLoadingAssignments(true)
+    getTeacherAssignments(selectedTeacher)
+      .then((assigned) => {
+        if (!cancelled) setSelectedStudents(new Set(assigned.map((a) => a.id)))
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingAssignments(false)
+      })
+    return () => { cancelled = true }
+  }, [selectedTeacher])
 
   async function handleAssign() {
     if (!selectedTeacher || selectedStudents.size === 0) return
@@ -58,7 +80,7 @@ export function AssignmentManager() {
       {selectedTeacher && (
         <>
           <p className="text-sm text-[var(--color-text-muted)]">
-            Select students to assign ({selectedStudents.size} selected)
+            {loadingAssignments ? "Loading current assignments..." : `Select students to assign (${selectedStudents.size} selected)`}
           </p>
           <Card className="divide-y divide-[var(--color-border)] bg-[var(--color-surface)] max-h-96 overflow-auto">
             {students.map((s) => (
@@ -80,7 +102,7 @@ export function AssignmentManager() {
               </label>
             ))}
           </Card>
-          <Button onClick={handleAssign} disabled={selectedStudents.size === 0}>
+          <Button onClick={handleAssign} disabled={selectedStudents.size === 0 || loadingAssignments}>
             Assign {selectedStudents.size} Students
           </Button>
         </>

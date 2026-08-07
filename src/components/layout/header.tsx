@@ -5,6 +5,7 @@ import { Menu, BookOpen, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Sidebar } from "./sidebar"
+import { cn } from "@/lib/utils"
 
 interface HeaderProps {
   user?: {
@@ -20,10 +21,14 @@ function Header({ user, notificationBell }: HeaderProps) {
   return (
     <header className="flex items-center gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-3 lg:hidden">
       <Sheet>
-        <SheetTrigger>
-          <Button variant="ghost" size="icon" aria-label="Open navigation menu">
-            <Menu className="h-5 w-5" />
-          </Button>
+        {/* SheetTrigger renders a <button> — must not wrap another <button> */}
+        <SheetTrigger
+          aria-label="Open navigation menu"
+          className={cn(
+            "inline-flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+          )}
+        >
+          <Menu className="h-5 w-5" />
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
           <SheetHeader className="sr-only">

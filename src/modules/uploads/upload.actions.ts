@@ -2,6 +2,7 @@
 
 import { auth } from "@/modules/auth/auth"
 import { prisma } from "@/lib/prisma"
+import { storage } from "@/modules/uploads"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
@@ -27,6 +28,14 @@ export async function removeEvidence(id: string): Promise<{ success: boolean; er
     }
 
     await prisma.evidence.delete({ where: { id } })
+
+    // Delete the stored file too — evidence.url is /api/files/{key}.
+    const key = evidence.url.startsWith("/api/files/")
+      ? evidence.url.slice("/api/files/".length)
+      : null
+    if (key) {
+      await storage.delete(key).catch(() => {})
+    }
 
     revalidatePath(`/experiences/${evidence.experienceId}`)
     return { success: true }

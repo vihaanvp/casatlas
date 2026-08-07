@@ -1,15 +1,10 @@
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
 import GitHub from "next-auth/providers/github"
+import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
-
-// Debug: log whether credentials are present (do not log the values)
-console.debug("[NextAuth] Google client ID present:", !!process.env.GOOGLE_CLIENT_ID)
-console.debug("[NextAuth] Google client secret present:", !!process.env.GOOGLE_CLIENT_SECRET)
-console.debug("[NextAuth] GitHub client ID present:", !!process.env.GITHUB_CLIENT_ID)
-console.debug("[NextAuth] GitHub client secret present:", !!process.env.GITHUB_CLIENT_SECRET)
-console.debug("[NextAuth] AUTH_TRUST_HOST:", process.env.AUTH_TRUST_HOST)
+import { authConfig } from "@/config/auth"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -31,23 +26,50 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         })
       )
     }
+    // Dev-only credentials login (AUTH_DEV_LOGIN=true). Not for production.
+    if (authConfig.providers.credentials.enabled) {
+      providers.push(
+        Credentials({
+          name: "Dev Login",
+          credentials: {
+            email: { label: "Email", type: "email" },
+          },
+          async authorize(credentials) {
+            const email =
+              typeof credentials?.email === "string" ? credentials.email.trim().toLowerCase() : ""
+            if (!email) return null
+            return prisma.user.findUnique({ where: { email } })
+          },
+        })
+      )
+    }
     return providers
   })(),
+  // JWT strategy works for both OAuth and the dev credentials login (Auth.js
+  // forbids database sessions when only the credentials provider is enabled).
+  session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user }) {
+    // Block new registrations when registration is disabled; existing users
+    // (matched by email) can still sign in.
+    async signIn({ user }) {
+      if (authConfig.allowRegistration) return true
+      if (!user.email) return false
+      const existing = await prisma.user.findUnique({
+        where: { email: user.email },
+        select: { id: true },
+      })
+      return !!existing
+    },
+    // Carry id/role from the DB user into the JWT on sign-in.
+    jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        // Fetch role on first sign-in
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { role: true },
-        })
-        token.role = (dbUser?.role as string) ?? "STUDENT"
+        token.role = (user as { role?: string }).role
       }
       return token
     },
-    async session({ session, token }) {
-      if (token?.id) {
+    session({ session, token }) {
+      if (session.user) {
         session.user.id = token.id as string
         session.user.role = (token.role as "STUDENT" | "TEACHER" | "ADMIN") ?? "STUDENT"
       }
@@ -56,6 +78,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: {
     signIn: "/login",
-    error: "/auth/error",
+    error: "/error",
   },
 })

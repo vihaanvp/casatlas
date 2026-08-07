@@ -14,7 +14,7 @@ import { RichTextEditor } from "@/components/shared/rich-text-editor"
 import { FileDropzone, FilePreviewItem } from "@/components/shared/file-dropzone"
 import { useAutosave } from "@/hooks/use-autosave"
 import { useUpload } from "@/hooks/use-upload"
-import { saveExperienceDraft, createExperience, updateExperience } from "../experience.actions"
+import { saveExperienceDraft, createExperience, updateExperience, getEvidence } from "../experience.actions"
 import { removeEvidence } from "@/modules/uploads/upload.actions"
 import { LEARNING_OUTCOMES, CAS_STRANDS, CAS_STRAND_LABELS } from "@/lib/constants"
 import { experienceBaseSchema } from "../experience.types"
@@ -192,8 +192,14 @@ function ExperienceForm({ experience, mode }: ExperienceFormProps) {
     return () => document.removeEventListener("keydown", handler)
   }, [saveNow])
 
-  // Trigger autosave on data change
+  // Trigger autosave on data change — skip the initial mount (edit mode is
+  // pre-populated, writing on page load would bump updatedAt for nothing).
+  const isFirstRender = React.useRef(true)
   React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
     if (data.title || data.description || data.reflection) {
       autosave(data)
     }
@@ -228,7 +234,8 @@ function ExperienceForm({ experience, mode }: ExperienceFormProps) {
     if (mode === "edit" && experience) {
       result = await updateExperience(experience.id, parsed.data)
     } else {
-      result = await createExperience(parsed.data)
+      // Promote the autosaved draft so its evidence is preserved.
+      result = await createExperience({ ...parsed.data, draftId })
     }
 
     if (result.success) {
@@ -551,12 +558,17 @@ function EvidenceStep({
       setLoadingEvidence(false)
       return
     }
-    // Fetch evidence from the experience
-    fetch(`/api/experiences/${experienceId}/evidence`)
-      .then((r) => r.ok ? r.json() : [])
-      .then(setExistingEvidence)
+    let cancelled = false
+    setLoadingEvidence(true)
+    getEvidence(experienceId)
+      .then((evidence) => {
+        if (!cancelled) setExistingEvidence(evidence)
+      })
       .catch(() => {})
-      .finally(() => setLoadingEvidence(false))
+      .finally(() => {
+        if (!cancelled) setLoadingEvidence(false)
+      })
+    return () => { cancelled = true }
   }, [experienceId])
 
   const handleRemoveExisting = async (id: string) => {

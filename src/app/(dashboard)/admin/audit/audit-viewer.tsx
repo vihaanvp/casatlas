@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { getAuditLogs } from "@/lib/audit"
+import { getAuditLogs } from "./audit.actions"
 
 type AuditAction = "LOGIN" | "LOGOUT" | "ACCOUNT_LINKED" | "EXPERIENCE_CREATED" | "EXPERIENCE_UPDATED" | "EXPERIENCE_DELETED" | "EXPERIENCE_SUBMITTED" | "EXPERIENCE_APPROVED" | "EXPERIENCE_REVISION_REQUESTED" | "COMMENT_ADDED" | "USER_ROLE_CHANGED" | "TEACHER_ASSIGNED" | "TEACHER_UNASSIGNED" | "CONFIG_CHANGED"
 
@@ -104,7 +104,7 @@ export function AuditLogViewer() {
             Previous
           </Button>
           <span className="text-sm text-[var(--color-text-muted)] self-center">Page {page}</span>
-          <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={logs.length < 30}>
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page >= Math.ceil(total / 30)}>
             Next
           </Button>
         </div>

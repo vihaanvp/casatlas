@@ -7,7 +7,7 @@ import type { ExperienceStatus, Role } from "@prisma/client"
 // The service assumes userId is already validated.
 
 /** Check if a user can access an experience (owner, assigned teacher, or admin). */
-async function canAccessExperience(experienceId: string, userId: string, role: Role): Promise<boolean> {
+export async function canAccessExperience(experienceId: string, userId: string, role: Role): Promise<boolean> {
   if (role === "ADMIN") return true
 
   const experience = await prisma.experience.findUnique({
@@ -67,7 +67,15 @@ export async function getExperiences(userId: string, params: ExperienceSearchPar
   }
 
   if (strand) {
-    where.strands = { some: { strand } }
+    // Support comma-separated multi-strand filtering: ?strand=CREATIVITY,ACTIVITY
+    const strands = strand
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s): s is "CREATIVITY" | "ACTIVITY" | "SERVICE" =>
+        ["CREATIVITY", "ACTIVITY", "SERVICE"].includes(s))
+    if (strands.length > 0) {
+      where.strands = { some: { strand: { in: strands } } }
+    }
   }
 
   if (outcome) {
@@ -259,26 +267,55 @@ export async function createExperience(
     isGroup?: boolean
     strands?: string[]
     outcomes?: string[]
-  }
+  },
+  draftId?: string
 ) {
+  const scalarFields = {
+    title: data.title,
+    date: data.date,
+    description: data.description,
+    reflection: data.reflection,
+    supervisor: data.supervisor,
+    hours: data.hours,
+    location: data.location,
+    notes: data.notes,
+    isGroup: data.isGroup ?? false,
+  }
+  const strandValues = (data.strands ?? []).map((strand) => ({ strand: strand as "CREATIVITY" | "ACTIVITY" | "SERVICE" }))
+  const outcomeValues = (data.outcomes ?? []).map((outcome) => ({ outcome }))
+
+  // Promote the autosaved draft so its evidence is preserved instead of
+  // creating a second, orphaned record.
+  if (draftId) {
+    const existing = await prisma.experience.findFirst({
+      where: { id: draftId, userId, deletedAt: null },
+      select: { id: true },
+    })
+    if (existing) {
+      // update may replace existing relations (deleteMany + create)
+      return prisma.experience.update({
+        where: { id: draftId },
+        data: {
+          ...scalarFields,
+          strands: strandValues.length
+            ? { deleteMany: {}, create: strandValues }
+            : { deleteMany: {} },
+          outcomes: outcomeValues.length
+            ? { deleteMany: {}, create: outcomeValues }
+            : { deleteMany: {} },
+        },
+        include: { outcomes: true, strands: true },
+      })
+    }
+  }
+
+  // create cannot use deleteMany — fresh record, only create relations
   return prisma.experience.create({
     data: {
       userId,
-      title: data.title,
-      date: data.date,
-      description: data.description,
-      reflection: data.reflection,
-      supervisor: data.supervisor,
-      hours: data.hours,
-      location: data.location,
-      notes: data.notes,
-      isGroup: data.isGroup ?? false,
-      strands: data.strands?.length
-        ? { create: data.strands.map((strand) => ({ strand: strand as "CREATIVITY" | "ACTIVITY" | "SERVICE" })) }
-        : undefined,
-      outcomes: data.outcomes?.length
-        ? { create: data.outcomes.map((outcome) => ({ outcome })) }
-        : undefined,
+      ...scalarFields,
+      strands: strandValues.length ? { create: strandValues } : undefined,
+      outcomes: outcomeValues.length ? { create: outcomeValues } : undefined,
     },
     include: {
       outcomes: true,

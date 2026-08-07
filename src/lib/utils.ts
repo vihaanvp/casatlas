@@ -21,6 +21,19 @@ export function formatDateShort(date: Date | string): string {
   }).format(new Date(date))
 }
 
+// Experience dates are stored as UTC midnight (new Date("YYYY-MM-DD"));
+// formatting in local time shifts the day for negative-offset timezones.
+// Format as the stored calendar date.
+export function formatExperienceDate(date: Date | string): string {
+  const d = new Date(date)
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  })
+}
+
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B"
   const k = 1024

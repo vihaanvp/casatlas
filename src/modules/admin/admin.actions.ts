@@ -56,6 +56,15 @@ export async function updateUserRole(userId: string, role: "STUDENT" | "TEACHER"
   }
   if (userId === session.user.id) throw new Error("Cannot change your own role")
 
+  // Don't allow demoting the last remaining admin — would lock out the system.
+  if (parsedRole.data !== "ADMIN") {
+    const adminCount = await prisma.user.count({ where: { role: "ADMIN" } })
+    const target = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
+    if (adminCount <= 1 && target?.role === "ADMIN") {
+      throw new Error("Cannot demote the last admin")
+    }
+  }
+
   const user = await prisma.user.update({ where: { id: userId }, data: { role: parsedRole.data } })
 
   auditLog({
@@ -97,9 +106,30 @@ export async function assignStudents(teacherId: string, studentIds: string[]) {
   const parsedStudentIds = studentIdArraySchema.safeParse(studentIds)
   if (!parsedStudentIds.success) throw new Error("Invalid student IDs")
 
+  // Validate that teacher is a TEACHER and all students are STUDENTs.
+  const [teacher, students] = await Promise.all([
+    prisma.user.findUnique({ where: { id: teacherId }, select: { role: true } }),
+    prisma.user.findMany({ where: { id: { in: parsedStudentIds.data } }, select: { id: true, role: true } }),
+  ])
+  if (teacher?.role !== "TEACHER") throw new Error("Teacher must have the TEACHER role")
+  const validStudentIds = students.filter((s) => s.role === "STUDENT").map((s) => s.id)
+  if (validStudentIds.length !== new Set(parsedStudentIds.data).size) {
+    throw new Error("Some students are not valid STUDENT accounts")
+  }
+
+  // Diff against existing assignments so re-saving doesn't wipe the roster.
+  const existing = await prisma.teacherStudent.findMany({
+    where: { teacherId },
+    select: { studentId: true },
+  })
+  const existingSet = new Set(existing.map((e) => e.studentId))
+  const targetSet = new Set(validStudentIds)
+  const toRemove = [...existingSet].filter((id) => !targetSet.has(id))
+  const toAdd = validStudentIds.filter((id) => !existingSet.has(id))
+
   await prisma.$transaction([
-    prisma.teacherStudent.deleteMany({ where: { teacherId } }),
-    ...parsedStudentIds.data.map((studentId) =>
+    ...(toRemove.length ? [prisma.teacherStudent.deleteMany({ where: { teacherId, studentId: { in: toRemove } } })] : []),
+    ...toAdd.map((studentId) =>
       prisma.teacherStudent.create({ data: { teacherId, studentId } })
     ),
   ])
@@ -109,7 +139,7 @@ export async function assignStudents(teacherId: string, studentIds: string[]) {
     action: "TEACHER_ASSIGNED",
     entity: "TeacherStudent",
     entityId: teacherId,
-    details: { studentIds },
+    details: { studentIds: validStudentIds },
   })
 
   revalidatePath("/admin")
@@ -137,18 +167,35 @@ export async function getTeacherAssignments(teacherId: string) {
   return assignments.map((a) => a.student)
 }
 
+// ─── Student Roster for assignment manager ───────────────
+
+/** Fetch all students for the assignment UI (role-scoped). */
+export async function getAllStudents() {
+  const session = await auth()
+  if (!session?.user || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+
+  const students = await prisma.user.findMany({
+    where: { role: "STUDENT" },
+    select: { id: true, name: true, email: true, role: true },
+    orderBy: { name: "asc" },
+  })
+  return students
+}
+
 // ─── System Stats ───────────────────────────────────────
 
 export async function getSystemStats() {
   const session = await auth()
   if (!session?.user || session.user.role !== "ADMIN") throw new Error("Unauthorized")
 
+  // Only count evidence/comments belonging to non-deleted experiences so the
+  // stats stay consistent with totalExperiences.
   const [totalUsers, totalExperiences, totalUploads, totalComments] =
     await Promise.all([
       prisma.user.count(),
       prisma.experience.count({ where: { deletedAt: null } }),
-      prisma.evidence.count(),
-      prisma.comment.count(),
+      prisma.evidence.count({ where: { experience: { deletedAt: null } } }),
+      prisma.comment.count({ where: { experience: { deletedAt: null } } }),
     ])
 
   // Group by role manually (Prisma groupBy doesn't support 'role' field after migration)
@@ -182,6 +229,12 @@ export async function permanentlyDeleteExperience(experienceId: string) {
   const session = await auth()
   if (!session?.user || session.user.role !== "ADMIN") throw new Error("Unauthorized")
 
+  const experience = await prisma.experience.findUnique({
+    where: { id: experienceId },
+    select: { id: true, title: true, userId: true },
+  })
+  if (!experience) throw new Error("Experience not found")
+
   await prisma.experience.delete({ where: { id: experienceId } })
 
   auditLog({
@@ -189,7 +242,7 @@ export async function permanentlyDeleteExperience(experienceId: string) {
     action: "EXPERIENCE_DELETED",
     entity: "Experience",
     entityId: experienceId,
-    details: { permanent: true },
+    details: { permanent: true, title: experience.title, ownerId: experience.userId },
   })
 
   revalidatePath("/admin")
