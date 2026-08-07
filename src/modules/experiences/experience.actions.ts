@@ -382,6 +382,13 @@ export async function getRecentActivity(limit?: number) {
   return experienceService.getRecentActivity(session.user.id, limit)
 }
 
+export async function getOnboardingChecklist() {
+  const session = await auth()
+  if (!session?.user?.id) return { checks: [], doneCount: 0, total: 0 }
+
+  return experienceService.getOnboardingChecklist(session.user.id)
+}
+
 // ─── Profile ───────────────────────────────────────────────
 
 export async function updateProfile(data: { name: string }): Promise<ActionResult> {

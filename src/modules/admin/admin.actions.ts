@@ -3,6 +3,7 @@
 import { auth } from "@/modules/auth/auth"
 import { prisma } from "@/lib/prisma"
 import { auditLog } from "@/lib/audit"
+import { getConfigValue, setConfigValue } from "@/lib/app-config"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
@@ -221,6 +222,39 @@ export async function getSystemStats() {
     totalUploads,
     totalComments,
   }
+}
+
+// ─── Runtime Config (registration toggle) ────────────────
+
+/** Current registration state: true when registration is open. */
+export async function getRegistrationState() {
+  const session = await auth()
+  if (!session?.user || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  const value = await getConfigValue("ALLOW_REGISTRATION")
+  // DB value wins; fall back to env default when never set.
+  return value === null ? process.env.ALLOW_REGISTRATION !== "false" : value !== "false"
+}
+
+/** Set registration state at runtime (no redeploy needed). */
+export async function setRegistrationState(open: boolean) {
+  const session = await auth()
+  if (!session?.user || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+
+  const parsed = z.boolean().safeParse(open)
+  if (!parsed.success) throw new Error("Invalid value")
+
+  await setConfigValue("ALLOW_REGISTRATION", String(parsed.data))
+
+  auditLog({
+    userId: session.user.id,
+    action: "CONFIG_CHANGED",
+    entity: "AppConfig",
+    details: { key: "ALLOW_REGISTRATION", value: parsed.data },
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/admin/settings")
+  return { success: true }
 }
 
 // ─── Permanent Delete ───────────────────────────────────

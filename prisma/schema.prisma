@@ -265,6 +265,18 @@ model Notification {
   @@map("notifications")
 }
 
+// ─── Runtime Configuration ────────────────────────────────
+// Simple key-value store for admin-tunable settings that would otherwise
+// require an env var + redeploy (e.g. registration toggle).
+
+model AppConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("app_config")
+}
+
 // ─── Enums ────────────────────────────────────────────────
 
 enum Theme {

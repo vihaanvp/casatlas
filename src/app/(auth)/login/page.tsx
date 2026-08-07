@@ -1,10 +1,15 @@
 import { signIn } from "@/modules/auth/auth"
 import { authConfig } from "@/config/auth"
+import { isRegistrationOpen } from "@/lib/app-config"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-export default function LoginPage() {
+// Reads the runtime registration state from the DB — never prerender this.
+export const dynamic = "force-dynamic"
+
+export default async function LoginPage() {
+  const registrationOpen = await isRegistrationOpen()
   return (
     <Card>
       <CardHeader className="text-center">
@@ -90,7 +95,7 @@ export default function LoginPage() {
           )}
 
         <div className="text-center text-sm text-[var(--color-text-muted)]">
-          {authConfig.allowRegistration ? (
+          {registrationOpen ? (
             <>
               Don&apos;t have an account?{" "}
               <Link href="/register" className="text-[var(--color-accent)] hover:underline">

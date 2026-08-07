@@ -2,10 +2,7 @@ import { auth } from "@/modules/auth/auth"
 import { redirect } from "next/navigation"
 import { getMyStudents, getPendingReviews, getTeacherStats } from "@/modules/teacher/teacher.actions"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
-import { EXPERIENCE_STATUS_LABELS, EXPERIENCE_STATUS_COLORS } from "@/lib/constants"
-import type { Strand } from "@prisma/client"
+import { PendingReviewsList } from "./pending-reviews"
 
 export default async function TeacherDashboardPage() {
   const session = await auth()
@@ -48,32 +45,12 @@ export default async function TeacherDashboardPage() {
             <p className="text-sm text-[var(--color-text-muted)]">No pending reviews</p>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {pending.experiences.map((exp: { id: string; title: string; date: Date | string; status: string; user: { name: string | null; email: string | null }; strands: { strand: Strand }[] }) => (
-              <Card key={exp.id} className="p-4 bg-[var(--color-surface)]">
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <Link href={`/experiences/${exp.id}`} className="text-sm font-medium text-[var(--color-text-primary)] hover:underline">
-                      {exp.title}
-                    </Link>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                      by {exp.user.name ?? exp.user.email} · {new Date(exp.date).toLocaleDateString("en-US", { timeZone: "UTC" })}
-                    </p>
-                    <div className="flex gap-1 mt-2 flex-wrap">
-                      {exp.strands.map((s: { strand: Strand }) => (
-                        <Badge key={s.strand} variant="outline" className="text-xs">
-                          {s.strand}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <Badge className={`${EXPERIENCE_STATUS_COLORS[exp.status as keyof typeof EXPERIENCE_STATUS_COLORS]} border text-xs`}>
-                    {EXPERIENCE_STATUS_LABELS[exp.status as keyof typeof EXPERIENCE_STATUS_LABELS]}
-                  </Badge>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <PendingReviewsList
+            experiences={pending.experiences.map((exp) => ({
+              ...exp,
+              date: exp.date instanceof Date ? exp.date.toISOString() : exp.date,
+            }))}
+          />
         )}
       </section>
 
@@ -86,9 +63,12 @@ export default async function TeacherDashboardPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {students.map((student: { id: string; name: string | null; email: string | null; image: string | null; createdAt: Date; experiences: { id: string; status: string; title: string; date: Date; createdAt: Date }[] }) => {
-              const approved = student.experiences.filter((e: { status: string }) => e.status === "APPROVED").length
+            {students.map((student) => {
               const total = student.experiences.length
+              const approved = student.approvedCount
+              const hours = student.totalHours
+              const strandCoverage = student.strandCount
+              const pct = total > 0 ? Math.round((approved / total) * 100) : 0
               return (
                 <Card key={student.id} className="p-4 bg-[var(--color-surface)]">
                   <div className="flex items-center gap-3">
@@ -102,9 +82,25 @@ export default async function TeacherDashboardPage() {
                       <p className="text-xs text-[var(--color-text-muted)] truncate">{student.email}</p>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center justify-between text-xs text-[var(--color-text-muted)]">
-                    <span>{total} experiences</span>
-                    <span className="text-emerald-400">{approved} approved</span>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <p className="text-base font-bold text-[var(--color-text-primary)]">{hours}</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">hours</p>
+                    </div>
+                    <div>
+                      <p className="text-base font-bold text-[var(--color-text-primary)]">{strandCoverage}/3</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">strands</p>
+                    </div>
+                    <div>
+                      <p className="text-base font-bold text-emerald-400">{approved}/{total}</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">approved</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-1.5 rounded-full bg-[var(--color-surface-hover)]">
+                    <div
+                      className="h-full rounded-full bg-[var(--color-accent)] transition-all duration-300"
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                 </Card>
               )

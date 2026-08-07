@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { authConfig } from "@/config/auth"
+import { isRegistrationOpen } from "@/lib/app-config"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -50,9 +51,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     // Block new registrations when registration is disabled; existing users
-    // (matched by email) can still sign in.
+    // (matched by email) can still sign in. Registration state can be toggled
+    // at runtime by an admin (DB override), falling back to the env default.
     async signIn({ user }) {
-      if (authConfig.allowRegistration) return true
+      if (await isRegistrationOpen()) return true
       if (!user.email) return false
       const existing = await prisma.user.findUnique({
         where: { email: user.email },

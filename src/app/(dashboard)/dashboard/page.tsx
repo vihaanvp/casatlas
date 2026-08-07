@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { LoadingPage } from "@/components/shared/loading-spinner"
 import { DashboardSkeleton } from "@/components/shared/dashboard-skeleton"
-import { getExperienceStats, getStrandProgress, getOutcomeProgress, getRecentDrafts, getRecentActivity } from "@/modules/experiences/experience.actions"
+import { auth } from "@/modules/auth/auth"
+import { EmptyState } from "@/components/shared/empty-state"
+import { getExperienceStats, getStrandProgress, getOutcomeProgress, getRecentDrafts, getRecentActivity, getOnboardingChecklist } from "@/modules/experiences/experience.actions"
 import {
   BookOpen,
   Clock,
@@ -18,6 +20,7 @@ import {
   FileText,
   Search,
   Activity,
+  Check,
 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { CAS_STRAND_LABELS } from "@/lib/constants"
@@ -158,6 +161,51 @@ async function ProgressSection() {
   )
 }
 
+// ─── Onboarding Checklist ────────────────────────────────
+
+async function OnboardingChecklist() {
+  const session = await auth()
+  // Student-facing only; hidden once everything is done.
+  if (session?.user?.role !== "STUDENT") return null
+
+  const checklist = await getOnboardingChecklist()
+  if (checklist.doneCount === checklist.total) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm font-medium text-[var(--color-text-secondary)]">
+          Getting Started
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <div className="mb-2 flex items-center justify-between text-xs text-[var(--color-text-muted)]">
+          <span>
+            {checklist.doneCount} of {checklist.total} complete
+          </span>
+          <Progress value={checklist.doneCount} max={checklist.total} className="w-24" />
+        </div>
+        {checklist.checks.map((check) => (
+          <div key={check.key} className="flex items-center justify-between gap-3">
+            <span
+              className={`text-sm ${check.done ? "text-[var(--color-text-muted)] line-through" : "text-[var(--color-text-primary)]"}`}
+            >
+              {check.label}
+            </span>
+            {check.done ? (
+              <Check className="h-4 w-4 text-emerald-500" />
+            ) : (
+              <Link href={check.href} className="text-xs text-[var(--color-accent)] hover:underline">
+                Start
+              </Link>
+            )}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
 // ─── Continue Working ────────────────────────────────────
 
 async function ContinueWorking() {
@@ -172,12 +220,18 @@ async function ContinueWorking() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            No drafts in progress.{" "}
-            <Link href="/experiences/new" className="text-[var(--color-accent)] hover:underline">
-              Start a new experience
-            </Link>
-          </p>
+          <EmptyState
+            icon={PenLine}
+            title="No drafts in progress"
+            description="Start a new experience to keep your CAS journey moving."
+            action={
+              <Link href="/experiences/new">
+                <Button variant="outline" size="sm">
+                  Start a new experience
+                </Button>
+              </Link>
+            }
+          />
         </CardContent>
       </Card>
     )
@@ -238,9 +292,11 @@ async function RecentActivity() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Your activity will appear here as you work on experiences.
-          </p>
+          <EmptyState
+            icon={Activity}
+            title="Nothing here yet"
+            description="Your activity will appear here as you work on experiences."
+          />
         </CardContent>
       </Card>
     )
@@ -351,6 +407,10 @@ export default function DashboardPage() {
 
         <div className="space-y-6">
           <QuickActions />
+
+          <Suspense fallback={<LoadingPage />}>
+            <OnboardingChecklist />
+          </Suspense>
 
           <Suspense fallback={<LoadingPage />}>
             <RecentActivity />

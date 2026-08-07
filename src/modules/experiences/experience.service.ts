@@ -171,6 +171,28 @@ export async function getRecentDrafts(userId: string, limit = 5) {
   })
 }
 
+/** Onboarding checklist progress — derived from real user state. */
+export async function getOnboardingChecklist(userId: string) {
+  const [user, experiences] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
+    prisma.experience.findMany({
+      where: { userId, deletedAt: null },
+      select: { strands: { select: { strand: true } } },
+    }),
+  ])
+
+  const strandSet = new Set<string>()
+  for (const exp of experiences) for (const s of exp.strands) strandSet.add(s.strand)
+
+  const checks = [
+    { key: "profile", label: "Complete your profile", done: !!user?.name, href: "/settings/profile" },
+    { key: "first", label: "Create your first experience", done: experiences.length > 0, href: "/experiences/new" },
+    { key: "strands", label: "Cover all three CAS strands", done: strandSet.size >= 3, href: "/experiences" },
+  ]
+
+  return { checks, doneCount: checks.filter((c) => c.done).length, total: checks.length }
+}
+
 export async function getRecentActivity(userId: string, limit = 10) {
   // Ponytail: derive activity from revisions + recent experience updates.
   // No dedicated Activity model needed yet.

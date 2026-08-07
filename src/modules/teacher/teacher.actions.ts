@@ -19,6 +19,35 @@ async function isAssignedTo(teacherId: string, studentId: string): Promise<boole
   return !!assignment
 }
 
+/** Users whose name (or email local-part) matches an @mention token. */
+async function resolveMentions(content: string) {
+  const tokens = Array.from(content.matchAll(/(?:^|\s)@([A-Za-z0-9_.-]+)/g))
+    .map((m) => m[1])
+    .filter(Boolean)
+  if (tokens.length === 0) return []
+
+  const unique = [...new Set(tokens.map((t) => t.toLowerCase()))]
+
+  // Match name OR email local-part (e.g. "@jdoe" → jdoe@school.org).
+  const [nameMatches, emailMatches] = await Promise.all([
+    prisma.user.findMany({
+      where: { name: { in: unique, mode: "insensitive" as const } },
+      select: { id: true },
+    }),
+    prisma.user.findMany({
+      where: { OR: unique.map((t) => ({ email: { startsWith: `${t}@`, mode: "insensitive" as const } })) },
+      select: { id: true },
+    }),
+  ])
+
+  const seen = new Set<string>()
+  return [...nameMatches, ...emailMatches].filter((u) => {
+    if (seen.has(u.id)) return false
+    seen.add(u.id)
+    return true
+  })
+}
+
 // ─── Teacher's Assigned Students ────────────────────────
 
 export async function getMyStudents() {
@@ -34,7 +63,10 @@ export async function getMyStudents() {
           id: true, name: true, email: true, image: true, createdAt: true,
           experiences: {
             where: { deletedAt: null },
-            select: { id: true, status: true, title: true, date: true, createdAt: true },
+            select: {
+              id: true, status: true, title: true, date: true, createdAt: true, hours: true,
+              strands: { select: { strand: true } },
+            },
             orderBy: { updatedAt: "desc" },
           },
         },
@@ -42,7 +74,14 @@ export async function getMyStudents() {
     },
   })
 
-  return (await assignments).map((a: { student: { id: string; name: string | null; email: string | null; image: string | null; createdAt: Date; experiences: { id: string; status: string; title: string; date: Date; createdAt: Date }[] } }) => a.student)
+  // Annotate each student with approval progress + hours for the roster UI.
+  return (await assignments).map((a) => {
+    const student = a.student
+    const approved = student.experiences.filter((e) => e.status === "APPROVED")
+    const hours = approved.reduce((sum, e) => sum + (e.hours ?? 0), 0)
+    const strandCount = new Set(approved.flatMap((e) => e.strands.map((s) => s.strand))).size
+    return { ...student, approvedCount: approved.length, totalHours: hours, strandCount }
+  })
 }
 
 // ─── Pending Reviews ────────────────────────────────────
@@ -150,6 +189,110 @@ export async function requestRevision(experienceId: string, reason: string) {
   return { success: true }
 }
 
+// ─── Batch Review ────────────────────────────────────────
+
+const idsArraySchema = z.array(idSchema).min(1).max(50, "Too many experiences at once")
+
+/** Validate a set of experiences is reviewable by this session; returns them. */
+async function reviewableExperiences(
+  session: { user: { id: string; role: string } },
+  ids: string[],
+  allowedStatus: "SUBMITTED" | "APPROVED" | "NEEDS_REVISION"
+) {
+  const experiences = await prisma.experience.findMany({
+    where: { id: { in: ids }, deletedAt: null, status: allowedStatus },
+    select: { id: true, userId: true, title: true },
+  })
+  if (experiences.length !== ids.length) {
+    throw new Error("Some experiences are not reviewable")
+  }
+  for (const exp of experiences) {
+    if (session.user.role !== "ADMIN" && !(await isAssignedTo(session.user.id, exp.userId))) {
+      throw new Error("You are not assigned to one of these students")
+    }
+  }
+  return experiences
+}
+
+/** Approve several submitted experiences at once. */
+export async function approveExperiences(experienceIds: string[]) {
+  const session = await auth()
+  if (!session?.user) throw new Error("Unauthorized")
+  if (session.user.role !== "TEACHER" && session.user.role !== "ADMIN") throw new Error("Unauthorized")
+
+  const parsed = idsArraySchema.safeParse(experienceIds)
+  if (!parsed.success) throw new Error("Invalid experience IDs")
+
+  const experiences = await reviewableExperiences(session, parsed.data, "SUBMITTED")
+
+  await prisma.experience.updateMany({
+    where: { id: { in: parsed.data } },
+    data: { status: "APPROVED" },
+  })
+
+  auditLog({
+    userId: session.user.id,
+    action: "EXPERIENCE_APPROVED",
+    entity: "Experience",
+    entityId: experiences[0].id,
+    details: { count: experiences.length, ids: experiences.map((e) => e.id) },
+  })
+
+  for (const exp of experiences) {
+    await createNotification({
+      userId: exp.userId,
+      type: "EXPERIENCE_APPROVED",
+      title: "Experience Approved",
+      message: `"${exp.title}" has been approved.`,
+      link: `/experiences/${exp.id}`,
+    })
+  }
+
+  revalidatePath("/teacher")
+  return { success: true, count: experiences.length }
+}
+
+/** Request revision on several submitted experiences at once (shared reason). */
+export async function requestRevisions(experienceIds: string[], reason: string) {
+  const session = await auth()
+  if (!session?.user) throw new Error("Unauthorized")
+  if (session.user.role !== "TEACHER" && session.user.role !== "ADMIN") throw new Error("Unauthorized")
+
+  const parsed = idsArraySchema.safeParse(experienceIds)
+  if (!parsed.success) throw new Error("Invalid experience IDs")
+
+  const parsedReason = z.string().min(1, "Reason is required").max(2000, "Reason must be under 2000 characters").trim().safeParse(reason)
+  if (!parsedReason.success) throw new Error(parsedReason.error.issues[0]?.message ?? "Invalid reason")
+
+  const experiences = await reviewableExperiences(session, parsed.data, "SUBMITTED")
+
+  await prisma.experience.updateMany({
+    where: { id: { in: parsed.data } },
+    data: { status: "NEEDS_REVISION" },
+  })
+
+  auditLog({
+    userId: session.user.id,
+    action: "EXPERIENCE_REVISION_REQUESTED",
+    entity: "Experience",
+    entityId: experiences[0].id,
+    details: { count: experiences.length, reason: parsedReason.data, ids: experiences.map((e) => e.id) },
+  })
+
+  for (const exp of experiences) {
+    await createNotification({
+      userId: exp.userId,
+      type: "REVISION_REQUESTED",
+      title: "Revision Requested",
+      message: `Teacher requested revision on "${exp.title}": ${parsedReason.data}`,
+      link: `/experiences/${exp.id}`,
+    })
+  }
+
+  revalidatePath("/teacher")
+  return { success: true, count: experiences.length }
+}
+
 // ─── Comments ───────────────────────────────────────────
 
 export async function addComment(experienceId: string, content: string, parentId?: string) {
@@ -191,6 +334,22 @@ export async function addComment(experienceId: string, content: string, parentId
       type: "TEACHER_COMMENT",
       title: "New Comment",
       message: `${session.user.name ?? "Teacher"} commented on "${experience.title}"`,
+      link: `/experiences/${experienceId}`,
+    })
+  }
+
+  // @mention notify: "@name" or "@email-local-part" → notify those users
+  // (excluding the commenter and the owner already notified above).
+  const mentioned = await resolveMentions(parsed.data.content)
+  const alreadyNotified = new Set([experience.userId, session.user.id])
+  for (const user of mentioned) {
+    if (alreadyNotified.has(user.id)) continue
+    alreadyNotified.add(user.id)
+    await createNotification({
+      userId: user.id,
+      type: "TEACHER_COMMENT",
+      title: "You were mentioned",
+      message: `${session.user.name ?? "Someone"} mentioned you in a comment on "${experience.title}"`,
       link: `/experiences/${experienceId}`,
     })
   }

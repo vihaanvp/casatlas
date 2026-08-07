@@ -88,11 +88,14 @@ function CommentSection({ experienceId, initialComments = [], currentUserId: _cu
         <Textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment..."
+          placeholder="Add a comment... (type @name to notify someone)"
           aria-label="Write a comment"
           className="flex-1 min-h-[80px] bg-[var(--color-surface)] border-[var(--color-border)]"
         />
       </div>
+      <p className="text-xs text-[var(--color-text-muted)] -mt-2">
+        Tip: use <span className="text-[var(--color-text-secondary)]">@name</span> to notify a specific person.
+      </p>
       <div className="flex justify-end">
         <Button onClick={handleSubmit} disabled={!newComment.trim() || loading} size="sm">
           {loading ? "Posting..." : "Post Comment"}

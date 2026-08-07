@@ -134,6 +134,7 @@ export default async function AdminDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             { href: "/admin/users", label: "User Management", description: "Manage users and roles" },
+            { href: "/admin/settings", label: "Settings", description: "Runtime configuration (registration)" },
             { href: "/admin/audit", label: "Audit Log", description: "View system activity" },
             { href: "/admin/assignments", label: "Teacher Assignments", description: "Assign students to teachers" },
           ].map((link) => (
