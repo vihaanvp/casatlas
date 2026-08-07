@@ -25,6 +25,7 @@ pnpm-debug.log*
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+.claude/
 
 # uploads
 uploads/*

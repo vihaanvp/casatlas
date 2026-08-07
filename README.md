@@ -158,6 +158,7 @@ CASAtlas is configured via environment variables. See [`.env.example`](.env.exam
 | `AUTH_TRUST_HOST` | Trust the hostname Auth.js receives (`true` for proxies / non-localhost). **Production:** set it | `false` |
 | `AUTH_DEV_LOGIN` | Dev-only passwordless email login. **Never enable in production** | `false` |
 | `UPLOAD_DIR` | File upload directory | `./uploads` |
+| `WIKI_REPO` | Git remote for the GitHub wiki (used by `pnpm wiki:publish`) | `https://github.com/<owner>/<repo>.wiki.git` |
 
 ## Project Structure
 
