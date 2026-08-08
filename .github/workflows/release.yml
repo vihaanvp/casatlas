@@ -56,15 +56,13 @@ jobs:
       - name: Compute per-platform tags
         id: platform
         run: |
-          TAGS=""
-          while IFS= read -r t; do
-            [ -z "$t" ] && continue
-            case "$t" in \#*) continue ;; esac
-            TAGS="$TAGS
-$t-${{ matrix.suffix }}"
-          done <<< "${{ steps.meta.outputs.tags }}"
+          printf '%s\n' \
+            "${{ steps.meta.outputs.tags }}" \
+            | grep -v '^#' \
+            | grep -v '^$' \
+            | sed 's/$/-${{ matrix.suffix }}/' > /tmp/platform-tags.txt
           echo "tags<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$TAGS" >> "$GITHUB_OUTPUT"
+          cat /tmp/platform-tags.txt >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
