@@ -53,13 +53,27 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Compute per-platform tags
+        id: platform
+        run: |
+          TAGS=""
+          while IFS= read -r t; do
+            [ -z "$t" ] && continue
+            case "$t" in \#*) continue ;; esac
+            TAGS="$TAGS
+$t-${{ matrix.suffix }}"
+          done <<< "${{ steps.meta.outputs.tags }}"
+          echo "tags<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$TAGS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}-${{ matrix.suffix }}
+          tags: ${{ steps.platform.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ matrix.platform }}
           cache-from: type=gha
