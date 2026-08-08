@@ -27,6 +27,9 @@ pnpm-debug.log*
 next-env.d.ts
 .claude/
 
+# local notes
+PENDING.md
+
 # uploads
 uploads/*
 !uploads/.gitkeep
