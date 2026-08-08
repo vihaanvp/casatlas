@@ -20,13 +20,17 @@ If you want to use the released image instead (no clone, no Node toolchain), see
 
 ## 2. Configure environment variables
 
-There's a checked-in `.env.example`. Copy it to `.env` (or create a new file):
+There's a Docker-specific `.env.example` inside `docker/`. Copy it to `docker/.env`:
 
 ```bash
+cd docker
 cp .env.example .env
+cd ..
 ```
 
-Edit `.env` and set **at minimum** these values:
+> The compose file loads `docker/.env` (note: **inside the `docker/` directory**, not the repo root). It already points `DATABASE_URL` at the `db` service hostname — don't use the root `.env.example` here or the app won't reach the database.
+
+Edit `docker/.env` and set **at minimum** these values:
 
 ```bash
 # ─── Auth.js ─────────────────────────────────
@@ -60,8 +64,8 @@ docker compose up -d
 
 This:
 
-1. Starts a **PostgreSQL 16** container, named `casatlas-db-1`.
-2. Builds the `casatlas-app` image from the local `docker/Dockerfile` (multi-stage).
+1. Starts a **PostgreSQL 16** container (`docker-db-1`).
+2. Pulls the pre-built `ghcr.io/vihaanvp/casatlas:latest` image (multi-arch — amd64 + arm64). To build from local source instead, use `docker compose up -d --build`.
 3. Waits for the database to be healthy (5-second retries, up to 5 times).
 4. Starts the app on `http://localhost:3000`.
 
@@ -97,9 +101,9 @@ In your browser:
 
 1. Visit `http://<server-ip>:3000` — you should see the dark-mode login screen.
 2. Click **Continue with Google** (or GitHub). Confirm the OAuth flow redirects you back.
-3. You should land on `/dashboard` as a new user with role `STUDENT`.
+3. You should land on `/dashboard` as a new user.
 
-If `/dashboard` is empty, you've installed correctly. Now you need to [promote yourself to admin](Configuration#promoting-your-first-admin) so you can manage other users.
+If `/dashboard` is empty, you've installed correctly. The **first account to sign in on a fresh install is automatically promoted to `ADMIN`** (see [Promoting your first admin](Configuration#promoting-your-first-admin)), so you should see the **Admin Panel** in the sidebar right away.
 
 ---
 
@@ -127,24 +131,19 @@ docker compose up -d --force-recreate app
 
 ## <a id="installing-from-ghcr-no-clone"></a>Installing from GHCR (no clone)
 
-Every tagged release publishes an image to GitHub Container Registry. You can pull it directly and skip building from source.
+Every push to `main` publishes the image to GitHub Container Registry with the tag `latest` (plus `main` and a per-commit `sha-<commit>`). You can pull it directly and skip building from source.
 
-A minimal `docker-compose.yml`:
+The checked-in `docker/docker-compose.yml` **already uses the pre-built image** (`ghcr.io/vihaanvp/casatlas:latest`), so the normal flow works whether or not you cloned the source. To install without cloning, create your own compose file with just the two services:
 
 ```yaml
 services:
   app:
     image: ghcr.io/vihaanvp/casatlas:latest
+    env_file:
+      - .env           # your docker/.env, see Step 2 above
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://casatlas:casatlas@db:5432/casatlas
-      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       UPLOAD_DIR: /app/uploads
     volumes:
       - uploads_data:/app/uploads
@@ -158,7 +157,7 @@ services:
     environment:
       POSTGRES_DB: casatlas
       POSTGRES_USER: casatlas
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a strong DB password}
+      POSTGRES_PASSWORD: casatlas
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -173,7 +172,7 @@ volumes:
   uploads_data:
 ```
 
-Pick a specific tag (`v0.1.1`, not `latest`) for reproducible deployments.
+Pin a specific tag (`sha-<commit>` or a `vX.Y.Z` release, not `latest`) for reproducible deployments.
 
 ---
 

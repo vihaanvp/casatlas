@@ -101,6 +101,7 @@ Regenerate in the provider's console, update both env vars, restart. Sessions pe
 # Pull the new image and rebuild
 cd /path/to/casatlas
 git pull
+cd docker
 docker compose pull app      # if using the GHCR image instead of local build
 docker compose up -d --force-recreate app
 ```

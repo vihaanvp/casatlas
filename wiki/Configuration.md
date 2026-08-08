@@ -98,7 +98,11 @@ If you want to change these limits for your deployment, edit the config and rebu
 
 ## <a id="promoting-your-first-admin"></a>Promoting your first admin
 
-There is no in-app "register as admin" flow. New OAuth sign-ups always get role **`STUDENT`**. To bootstrap the first admin:
+**Automatic bootstrap (recommended).** On a fresh install (no `ADMIN` user in the database), the **first account that signs in is automatically promoted to `ADMIN`**. Sign in once after deploying and you'll land with the Admin Panel in the sidebar — no SQL required.
+
+> **Setup tip:** claim the first account **immediately** after deploying. Because the bootstrap is "first sign-in wins," whoever signs in first on a brand-new instance becomes the operator. If you deploy with registration open, sign up right away (or set `ALLOW_REGISTRATION=false` until you've claimed your account).
+
+**Manual promotion.** If you need to promote a specific existing user instead (e.g. you set `ALLOW_REGISTRATION=false`, or someone else created the first account):
 
 1. Sign in once with the OAuth provider of your choice.
 2. Connect to the database and promote that user:
@@ -120,7 +124,7 @@ There is no in-app "register as admin" flow. New OAuth sign-ups always get role 
 
 After the first admin exists, additional admins can be promoted through `/admin/users` in the UI.
 
-> **Why this dance?** Self-service admin promotion is a security hole — anyone could grab an OAuth account, hit "promote me," and own the instance. This way, only someone who can run SQL against the database (i.e. you, the operator) can.
+> **Why not a manual-only dance?** Self-service admin promotion is normally a security hole — anyone could grab an OAuth account, hit "promote me," and own the instance. The first-sign-in bootstrap is safe because it only fires when there are **zero** admins, which on a self-hosted install means *you* are the operator setting it up.
 
 ---
 

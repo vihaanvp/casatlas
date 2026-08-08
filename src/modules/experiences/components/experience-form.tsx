@@ -29,6 +29,7 @@ import {
   FileUp,
   Trash2,
   RotateCcw,
+  TriangleAlert,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────
@@ -595,6 +596,18 @@ function EvidenceStep({
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Evidence</h2>
+
+      {/* Beta warning — CASAtlas is a beta build; users should keep their own copies. */}
+      <div
+        className="flex items-start gap-3 rounded-md border border-[var(--color-warning)]/50 bg-[var(--color-warning)]/10 p-3 text-sm text-[var(--color-text-secondary)]"
+        role="note"
+      >
+        <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-warning)]" />
+        <p>
+          Please make sure to keep a backup of your reflection and evidence, as this is a beta
+          build of CASAtlas.
+        </p>
+      </div>
 
       <FileDropzone
         onFiles={(newFiles) => upload(newFiles)}

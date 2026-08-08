@@ -8,7 +8,7 @@ CASAtlas is built to be self-hosted. You can run it on anything from a Raspberry
 
 | Path | Best when |
 |------|-----------|
-| [**Docker (recommended)**](Self-Hosting-with-Docker) | You have a Linux server, a VPS, or a NAS that runs Docker. One command brings up the app and a PostgreSQL database together. This is what 95% of self-hosters want. |
+| [**Docker (recommended)**](Self-Hosting-Docker) | You have a Linux server, a VPS, or a NAS that runs Docker. One command brings up the app and a PostgreSQL database together. This is what 95% of self-hosters want. |
 | [**From source**](Self-Hosting-From-Source) | You want to modify the code, or you can't run Docker. You bring your own PostgreSQL and run `pnpm install && pnpm dev` or `pnpm build && pnpm start`. |
 
 Both paths give you the same application — Docker just packages it more conveniently. Pick the one that fits your setup.
@@ -76,7 +76,7 @@ A few things you should plan for:
 
 ## Where to go next
 
-- **Docker users** → [Self-Hosting with Docker](Self-Hosting-with-Docker)
+- **Docker users** → [Self-Hosting with Docker](Self-Hosting-Docker)
 - **From source** → [Self-Hosting from Source](Self-Hosting-from-Source)
 - **Need OAuth setup first** → [OAuth Setup](OAuth-Setup)
 - **Ready to deploy** but not sure what every env var does → [Configuration](Configuration)
