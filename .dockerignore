@@ -1,16 +1,59 @@
-node_modules
-npm-debug.log
-Dockerfile
-docker/
+# Git
 .git
 .gitignore
+
+# Node
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
 .next
 out
-.coverage
+build
+dist
+*.tsbuildinfo
+
+# Environment
 .env
-.env.local
-.env.development
-.env.production
-.env.test
-logs
+.env.*
+!/.env.example
+
+# Database & persistent config (will be on a bind mount / volume)
+uploads/
+*.db
+*.db-bak
+*.bak
+
+# Testing
+.coverage
+.nyc_output
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker/
+.dockerignore
+docker-compose.yml
+
+# Docs
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+SPEC.md
+docs/
+
+# Misc
 *.log
+logs/

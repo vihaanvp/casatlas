@@ -1,8 +1,13 @@
-# ��� Build Stage �������������������������������������������
+# =============================================================================
+# CASAtlas — Dockerfile
+# Multi-stage build for a small, secure production image.
+# =============================================================================
+
+# ---- Base ----
 FROM node:20-alpine AS base
 RUN corepack enable
 
-# ��� Dependencies �����������������������������������������
+# ---- Dependencies ----
 FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
@@ -12,7 +17,7 @@ COPY prisma.config.ts ./
 RUN pnpm install --frozen-lockfile
 RUN DATABASE_URL="postgresql://user:password@localhost:5432/dummy" pnpm prisma generate
 
-# ��� Build ������������������������������������������������
+# ---- Build ----
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -22,9 +27,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL="postgresql://user:password@localhost:5432/dummy"
 RUN pnpm build
 
-# ��� Production �������������������������������������������
+# ---- Production ----
 FROM base AS runner
 WORKDIR /app
+
+# OCI image labels for GitHub package registry
+LABEL org.opencontainers.image.source=https://github.com/vihaanvp/CASAtlas
+LABEL org.opencontainers.image.description="CASAtlas — IB CAS portfolio tracker"
+LABEL org.opencontainers.image.licenses=MIT
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -51,4 +61,5 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # ---- run migrations then start the app ----
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/next start"]
+# Use npx (available in runner) instead of pnpx
+CMD ["sh", "-c", "npx prisma migrate deploy && npx next start"]

@@ -1,16 +1,48 @@
+# =============================================================================
+# CASAtlas — Docker Compose
+#
+# Zero-config quick start (any Docker host):
+# git clone https://github.com/vihaanvp/CASAtlas.git
+# cd CASAtlas
+# cp .env.example .env
+# # Edit .env with your secrets (AUTH_SECRET, OAuth credentials, etc.)
+# docker compose up -d
+# Open http://localhost:3000
+#
+# The image is multi-arch (linux/amd64 + linux/arm64) so it runs on
+# Raspberry Pi 3/4/5, standard servers, and everything in between.
+# =============================================================================
+
 services:
   app:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     env_file:
-      - ../.env
+      - .env
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://casatlas:casatlas@db:5432/casatlas
-      # AUTH_SECRET, NEXT_PUBLIC_APP_URL, NEXTAUTH_URL, etc. are loaded from .env
-      # but can be overridden here if needed
+      # Database URL is loaded from .env (DATABASE_URL)
+      # For external DB, set DATABASE_URL in .env
+      # For local compose DB, default is provided below
+      DATABASE_URL: ${DATABASE_URL:-postgresql://casatlas:casatlas@db:5432/casatlas}
+      # Auth
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-false}
+      # OAuth (leave empty to disable)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      # Registration (runtime toggle in admin panel overrides)
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      # Dev-only email login (DO NOT enable in production)
+      AUTH_DEV_LOGIN: ${AUTH_DEV_LOGIN:-false}
+      # Upload
+      UPLOAD_DIR: /app/uploads
     volumes:
       - uploads_data:/app/uploads
     depends_on:
