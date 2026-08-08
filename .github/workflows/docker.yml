@@ -17,7 +17,16 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    # Build each architecture natively — QEMU-emulated arm64 builds
+    # intermittently crash (SIGILL) during Next.js's Turbopack page build.
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
       packages: write
@@ -61,7 +70,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: true
