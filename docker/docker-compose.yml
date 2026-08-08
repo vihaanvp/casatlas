@@ -9,12 +9,13 @@
 # docker compose up -d
 # Open http://localhost:3000
 #
-# The image is multi-arch (linux/amd64 + linux/arm64) so it runs on
-# Raspberry Pi 3/4/5, standard servers, and everything in between.
+# Uses the pre-built image from GitHub Container Registry (multi-arch).
+# To build from source instead: `docker compose up -d --build`
 # =============================================================================
 
 services:
   app:
+    image: ghcr.io/vihaanvp/casatlas:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile

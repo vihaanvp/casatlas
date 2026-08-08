@@ -86,20 +86,29 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Docker Deployment
 
-The app ships as a Docker image with `docker-compose.yml` (PostgreSQL 16 + app). From the repo root:
+The app ships as a multi-arch Docker image (linux/amd64 + linux/arm64) published to [GitHub Container Registry](https://github.com/vihaanvp/CASAtlas/pkgs/container/casatlas), with `docker-compose.yml` bundling PostgreSQL 16 + app. Zero-config quick start:
 
 ```bash
-# Set up environment
+# Clone, then set up the Docker environment
+git clone https://github.com/vihaanvp/CASAtlas.git
+cd CASAtlas/docker
 cp .env.example .env
-# Edit .env: set DATABASE_URL to point at the container's DB if needed,
-# and set a real AUTH_SECRET (openssl rand -base64 32).
+# Edit .env: set a real AUTH_SECRET (openssl rand -base64 32)
+# and OAuth credentials if you want social login.
 
-# Start with Docker Compose
-cd docker
+# Pull the pre-built image and start (app + PostgreSQL)
 docker compose up -d
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000). Migrations run automatically on container start.
+The application will be available at [http://localhost:3000](http://localhost:3000). Migrations run automatically on container start. Data persists in named volumes (`postgres_data`, `uploads_data`); nothing is lost on restart or `docker compose up -d`.
+
+**Build from source instead of pulling the image:**
+
+```bash
+docker compose up -d --build
+```
+
+**Use an external database** (e.g. managed Postgres): set `DATABASE_URL` in `docker/.env` to point at it and drop the `db` service. **Reverse proxy / non-localhost hostname:** set `NEXT_PUBLIC_APP_URL` and `NEXTAUTH_URL` to your public URL and keep `AUTH_TRUST_HOST=true`.
 
 ### Deploying without Docker
 
