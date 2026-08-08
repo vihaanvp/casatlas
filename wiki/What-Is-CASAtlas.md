@@ -31,7 +31,7 @@ CASAtlas is a good fit if you want to:
 - **Preserve your own data** in your own database — exportable, restorable, yours to keep.
 - **Avoid subscription costs** for an IB portfolio product. CASAtlas is free and MIT-licensed.
 
-If you're a student without technical support available, you can still self-host on a small VPS or even a Raspberry Pi — see [Self-Hosting with Docker](Self-Hosting-with-Docker).
+If you're a student without technical support available, you can still self-host on a small VPS or even a Raspberry Pi — see [Self-Hosting with Docker](Self-Hosting-Docker).
 
 ---
 

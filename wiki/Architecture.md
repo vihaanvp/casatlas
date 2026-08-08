@@ -18,7 +18,7 @@ CASAtlas is a **single-process monolith**. Everything — render, mutations, aut
 
 There is no separate backend service. Tests run against the same Next.js app via Vitest (Node env) and Vitest's module-resolution for `@/`.
 
-For full architectural diagrams and design rationale, see [SPEC.md on the main repo](https://github.com/vihaanvp/casatlas/blob/main/SPEC).
+For full architectural diagrams and design rationale, see [SPEC.md on the main repo](https://github.com/vihaanvp/casatlas/blob/main/SPEC.md).
 
 ---
 
@@ -70,7 +70,7 @@ The trade-off: forgetting to check in one place leaves that place open. We rely 
 - Every API route under `/api/upload`, `/api/files`, `/api/search` calling `auth()` itself.
 - Server Actions in `src/modules/*/` validating `session?.user?.id` (and, when needed, role).
 
-This is documented in [Developer Guide#route-protection](Developer-Guide#route-protection).
+This is documented in [Developer Guide](Developer-Guide).
 
 ---
 

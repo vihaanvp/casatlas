@@ -206,13 +206,9 @@ If you're contributing, every schema change ships with a migration **in the same
 
 ---
 
-## Planted seeds (none yet)
+## Planted seeds
 
-`prisma/seed.ts` currently does nothing — see the file itself. There's no seed data because:
-- We don't want random sample CAS experiences leaking into a real instance.
-- A future "load demo data" feature belongs in admin tools, not the seed.
-
-If you want a dev seed of fixtures (a teacher, a student, a few experiences), write one in `prisma/seed.ts` and run `pnpm db:seed`.
+`prisma/seed.ts` (run via `pnpm db:seed`) creates demo **users** only — `admin@casatlas.local` (ADMIN), `teacher@casatlas.local` (TEACHER), and `student@casatlas.local` (STUDENT, assigned to the teacher so the teacher workflow is testable). It does **not** create any experiences, because we don't want sample CAS data leaking into a real instance.
 
 ---
 

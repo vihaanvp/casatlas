@@ -1,6 +1,6 @@
 # Testing
 
-CASAtlas uses **Vitest** as the only test runner. We don't have Playwright (the `test:e2e` package.json script is declared but no tests are written yet), and we don't write integration tests against a live database.
+CASAtlas uses **Vitest** as the only test runner. We don't have Playwright, and we don't write integration tests against a live database.
 
 ---
 
@@ -12,10 +12,8 @@ CASAtlas uses **Vitest** as the only test runner. We don't have Playwright (the 
 | `src/lib/utils.test.ts` | Date / duration / size formatting, `cn()` Tailwind merge, `slugify()` |
 | `src/lib/constants.test.ts` | Strands, statuses, learning outcomes — label maps and enums stay consistent |
 | `src/lib/rbac.test.ts` | Role-to-permission mappings |
-| `src/lib/navigation.test.ts` | Active-route detection logic |
-| `src/lib/dashboard.test.ts` | Cmd+K keyboard shortcuts, accessibility settings persistence, preference persistence, activity-feed deduplication, strand/outcome progress calculation |
 
-Current totals: **89 tests, all passing** (`pnpm test`).
+Current totals: **56 tests, all passing** (`pnpm test`).
 
 ---
 
@@ -42,9 +40,9 @@ Current totals: **89 tests, all passing** (`pnpm test`).
 
 For v0.1.x we value **fast, deterministic tests** over coverage numbers. Prisma queries are tested manually via the end-to-end app and via curl in dev. Add DB tests when you find an actual bug class that escapes — until then they're noise.
 
-**No component tests with `@testing-library/react`.** The dep is installed but we haven't written any tests against components. Component tests of Server Components need extra plumbing. If you want to add one, look at `tests/setup.ts` first — it's currently a single line that loads `@testing-library/jest-dom`.
+**No component tests with `@testing-library/react`.** The dep is installed but we haven't written any tests against components. Component tests of Server Components need extra plumbing.
 
-**No Playwright e2e tests.** The `pnpm test:e2e` script is declared but no `playwright.config.ts` exists. Adding e2e tests is high-value but a real investment; keep that scoped for a future release.
+**No Playwright e2e tests.** There's no `playwright.config.ts` and no `test:e2e` script. Adding e2e tests is high-value but a real investment; keep that scoped for a future release.
 
 ---
 

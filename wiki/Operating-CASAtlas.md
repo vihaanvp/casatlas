@@ -172,7 +172,7 @@ docker compose down
 docker compose down -v
 
 # Remove the image (saves disk)
-docker image rm casatlas-app
+docker image rm ghcr.io/vihaanvp/casatlas:latest
 ```
 
 If you want your users' data to be portable, do this **first**:

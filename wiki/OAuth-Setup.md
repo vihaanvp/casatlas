@@ -145,6 +145,6 @@ For general questions about OAuth setup not covered here, you can email the main
 
 ## Where to go next
 
-- **Deploy with OAuth ready** → [Self-Hosting with Docker](Self-Hosting-with-Docker)
+- **Deploy with OAuth ready** → [Self-Hosting with Docker](Self-Hosting-Docker)
 - **What env vars exist beyond OAuth?** → [Configuration](Configuration)
 - **Promote yourself to admin after first sign-in** → [Configuration#promoting-your-first-admin](Configuration#promoting-your-first-admin)

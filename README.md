@@ -46,7 +46,7 @@ CASAtlas is a self-hosted web application designed for IB Diploma Programme stud
 | Layer | Technology |
 |-------|-----------|
 | Framework | [Next.js 16](https://nextjs.org/) (App Router) |
-| Language | [TypeScript 5.8](https://www.typescriptlang.org/) |
+| Language | [TypeScript 6](https://www.typescriptlang.org/) |
 | UI | [React 19](https://react.dev/) + [Tailwind CSS 4](https://tailwindcss.com/) |
 | Database | [PostgreSQL 16](https://www.postgresql.org/) + [Prisma 7](https://www.prisma.io/) |
 | Authentication | [Auth.js v5](https://authjs.dev/) (NextAuth) |
@@ -108,7 +108,7 @@ The application will be available at [http://localhost:3000](http://localhost:30
 docker compose up -d --build
 ```
 
-**Use an external database** (e.g. managed Postgres): set `DATABASE_URL` in `docker/.env` to point at it and drop the `db` service. **Reverse proxy / non-localhost hostname:** set `NEXT_PUBLIC_APP_URL` and `NEXTAUTH_URL` to your public URL and keep `AUTH_TRUST_HOST=true`.
+**Use an external database** (e.g. managed Postgres): set `DATABASE_URL` in `docker/.env` to point at it and drop the `db` service. **Reverse proxy / non-localhost hostname:** set `NEXT_PUBLIC_APP_URL` to your public URL and keep `AUTH_TRUST_HOST=true`.
 
 ### Deploying without Docker
 
@@ -117,7 +117,7 @@ docker compose up -d --build
 3. `pnpm install`, then apply the schema:
    ```bash
    pnpm prisma migrate deploy
-   pnpm db:seed          # optional: demo accounts
+   pnpm db:seed          # optional: seed demo users (admin@ / teacher@casatlas.local)
    ```
 4. Build and start:
    ```bash
@@ -162,7 +162,7 @@ CASAtlas is configured via environment variables. See [`.env.example`](.env.exam
 | `GITHUB_CLIENT_ID` | GitHub OAuth client ID | — |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | — |
 | `NEXT_PUBLIC_APP_URL` | Application URL | `http://localhost:3000` |
-| `NEXTAUTH_URL` | Canonical Auth.js URL (only needed if different from `NEXT_PUBLIC_APP_URL`) | — |
+| `AUTH_URL` | Optional: canonical Auth.js URL if it differs from `NEXT_PUBLIC_APP_URL` (Auth.js v5 name; defaults to `NEXT_PUBLIC_APP_URL`) | — |
 | `ALLOW_REGISTRATION` | Enable public registration | `true` |
 | `AUTH_TRUST_HOST` | Trust the hostname Auth.js receives (`true` for proxies / non-localhost). **Production:** set it | `false` |
 | `AUTH_DEV_LOGIN` | Dev-only passwordless email login. **Never enable in production** | `false` |

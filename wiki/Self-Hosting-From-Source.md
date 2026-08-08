@@ -18,9 +18,7 @@ pnpm install
 
 The `postinstall` hook in `package.json` runs `prisma generate` automatically, so the database client is ready to go after install.
 
-> **Use pnpm 9.x.** pnpm 10+ removed support for the `pnpm.overrides` field in `package.json` (it moved to `pnpm-workspace.yaml`). CASAtlas still uses overrides to patch the `postcss` advisory, so pin pnpm to 9.
-
-Other versions of pnpm will print a warning every run but still work — eventually that warning will become a problem.
+Use pnpm 9.x — that's the version the lockfile (`pnpm-lock.yaml`) was generated with. Other versions will print a warning but still work.
 
 ---
 
@@ -102,7 +100,7 @@ Before committing anything:
 ```bash
 pnpm lint          # ESLint via eslint .
 pnpm type-check    # tsc --noEmit
-pnpm test          # Vitest (89 tests in src/**/*.test.ts)
+pnpm test          # Vitest (56 tests in src/**/*.test.{ts,tsx})
 ```
 
 CI on `main` runs all three in addition to `pnpm build` and a full Docker build. Your PR should pass them locally before you push.

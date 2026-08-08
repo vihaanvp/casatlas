@@ -57,7 +57,7 @@ CASAtlas is light. A modest setup is enough:
 You don't need to do any of this — it's already wired up:
 
 - HTTPS / HSTS / Content-Security-Policy headers are set in code (`next.config.ts`)
-- Database migrations run automatically when the container starts (via the `postinstall` step)
+- Database migrations run automatically when the container starts (`prisma migrate deploy` in the Dockerfile `CMD`)
 - Audit logs of every meaningful action
 - Soft-delete on experiences (you have 30 days to recover before they vanish for real)
 

@@ -24,7 +24,7 @@ cp .env.example .env.local
 
 # 4. Database
 pnpm prisma migrate dev    # applies migrations and creates the schema
-pnpm db:seed               # optional, currently a no-op
+pnpm db:seed               # optional: seeds demo users (admin@ / teacher@casatlas.local)
 
 # 5. Dev server
 pnpm dev
@@ -77,12 +77,11 @@ casatlas/
 │   ├── config/                      Site/auth/upload/features/dashboard config — env-backed
 │   └── types/                       Shared global types
 │
-├── tests/                            Vitest setup (just `setup.ts`)
 ├── docs/                             Markdown docs (architecture, ADRs)
 ├── docker/                           Dockerfile + docker-compose.yml
 ├── prisma/                           Schema and migrations
+├── prisma.config.ts                  Prisma 7 datasource URL (env-driven)
 ├── next.config.ts                    CSP / HSTS / etc. headers
-├── tailwind.config.ts                Tailwind v4 setup
 ├── tsconfig.json                     TS6 (no baseUrl, noUncheckedSideEffectImports: false)
 ├── eslint.config.mjs                 flat config, no FlatCompat
 └── package.json                      npm scripts & dependencies
@@ -95,7 +94,7 @@ casatlas/
 ### TypeScript
 
 - **Strict mode** is on. No `any` except where explicitly needed (we used to have one in `api/search/route.ts` and replaced it with `Prisma.ExperienceWhereInput` — don't add new ones).
-- **ESM** throughout (`"type": "module"` is implicit via `.mjs` and `next.config.ts`).
+- **ESM** for configs (`.mjs`, `next.config.ts`, `vitest.config.ts`); source is CommonJS-style TypeScript compiled by Next.js.
 - `import { x } from "@/lib/..."` — paths use the `@/*` alias defined in `tsconfig.json`.
 
 ### React Server vs Client Components
@@ -180,7 +179,7 @@ pnpm test             # vitest run
 pnpm test:watch       # vitest (watch mode)
 pnpm db:migrate       # prisma migrate dev (creates new migrations; dev only)
 pnpm db:studio        # prisma studio
-pnpm db:seed          # tsx prisma/seed.ts (currently a no-op stub)
+pnpm db:seed          # tsx prisma/seed.ts (seeds demo users)
 ```
 
 CI matches this: [lint → type-check → test → build → docker build](Operating-CASAtlas).
@@ -197,7 +196,7 @@ CI matches this: [lint → type-check → test → build → docker build](Opera
 | Add a new sidebar entry | `src/components/layout/sidebar.tsx` (`studentNav` / `teacherNav` / `adminNav`) |
 | Add a new dashboard widget | `src/app/(dashboard)/dashboard/page.tsx` |
 | Change file-upload limits | `src/config/upload.ts` and `next.config.ts` (both, not just one) |
-| Change the role of the first admin | Bootstrap via SQL — see [Configuration#promoting-your-first-admin](Configuration#promoting-your-first-admin) |
+| Change the role of the first admin | Automatic bootstrap (first sign-in) — see [Configuration#promoting-your-first-admin](Configuration#promoting-your-first-admin) |
 
 ---
 

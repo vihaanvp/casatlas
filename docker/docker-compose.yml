@@ -30,7 +30,6 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql://casatlas:casatlas@db:5432/casatlas}
       # Auth
       AUTH_SECRET: ${AUTH_SECRET:-}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-false}
       # OAuth (leave empty to disable)

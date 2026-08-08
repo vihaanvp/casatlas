@@ -5,7 +5,13 @@ All notable changes to CASAtlas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.1] - Unreleased
+## [0.1.1] - 2026-08-08
+
+### Added
+
+- **First-user admin bootstrap** — on a fresh install, the first account to sign in is automatically promoted to `ADMIN` (`src/modules/auth/auth.ts`), so a new deployment always has an operator
+- **Beta backup warning** on the evidence-upload step, reminding students to keep copies of their reflections and evidence
+- **Docker self-hosting quick start** — `docker/docker-compose.yml` pulls a pre-built multi-arch image from GHCR (`ghcr.io/vihaanvp/casatlas:latest`) with a zero-config `.env.example`, named volumes for Postgres and uploads, and migrations applied automatically on boot
 
 ### Changed
 
@@ -15,16 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **zod** upgraded from 3.25 to 4.4
 - **lucide-react** upgraded from 0.469 to 1.24
 - **@types/node** upgraded from 22.20 to 26.1
-- **prisma** / **@prisma/client** stay at 6.19 (Prisma 7 blocked by `@auth/prisma-adapter` peer deps)
+- **Prisma** upgraded from 6.19 to 7.9.1 (`@auth/prisma-adapter` 2.11.3 now supports Prisma 7). Prisma 7 moves the datasource URL out of `schema.prisma` into `prisma.config.ts`, and the client now uses the `PrismaPg` driver adapter (`src/lib/prisma.ts`)
+- **Docker base image** pinned to `node:20-alpine` (current LTS). Newer images (node:25+) remove bundled corepack, which breaks the `corepack enable` build step
 
 ### Fixed
 
 - `next lint` removed in Next.js 16 — lint script now runs `eslint .` directly
 - ESLint config migrated to native flat config (no more `FlatCompat` / circular references)
 - Release workflow missing `docker/setup-buildx-action` step (was failing Docker cache export in CI)
-- Docker build using `node:20-alpine` (node:26-alpine has corepack issues under BuildKit)
+- Release workflow now builds **both architectures natively** (`linux/amd64` + `linux/arm64`) via a runner matrix — previously the `v*` tag builds ran amd64-only under QEMU and crashed with SIGILL
+- Security advisory for postcss XSS (`< 8.5.10`) — lockfile now resolves all postcss instances to the patched version
 - GitHub Actions major-version bumps: `actions/checkout` 7, `pnpm/action-setup` 6, `actions/setup-node` 6, `docker/setup-buildx-action` 4, `docker/login-action` 4, `docker/metadata-action` 6
-- Security advisory for postcss XSS (`< 8.5.10`) — patched via `pnpm.overrides` to `^8.5.10`; lockfile now resolves all postcss instances to the patched version
 
 ## [0.1.0] - 2026-07-11
 
@@ -47,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known Limitations
 
-- Database migrations require manual `prisma migrate dev` (no automatic migrations in production yet)
+- No email / SMTP — notifications are in-app only
 - File uploads are stored locally (S3/cloud storage not yet implemented)
 - No real-time notifications (polling-based)
 - Portfolio export is print-to-PDF only
@@ -57,9 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technology Stack
 
 - Next.js 16 (App Router) with React 19
-- TypeScript 5.9
+- TypeScript 6
 - Tailwind CSS 4
-- Prisma 6.19 with PostgreSQL 16
-- Auth.js v5 (NextAuth)
+- Prisma 7 with PostgreSQL 16
+- Auth.js v5 (NextAuth), JWT session strategy
 - Vitest for testing
 - Docker multi-stage build

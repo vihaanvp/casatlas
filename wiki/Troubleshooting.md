@@ -95,7 +95,7 @@ Both need updating together if you change the limit.
 
 ### Upload fails with `403 Forbidden` immediately
 
-`/api/files/...` enforces a **path-owner check** — the first path segment must equal the requesting user's ID. If you uploaded from a session A but try to download from session B, you'll get 403. This is by design.
+`/api/files/[...path]` enforces a **path-owner check** — the first path segment must equal the requesting user's ID. If you uploaded from a session A but try to download from session B, you'll get 403. This is by design.
 
 If you're getting 403 on a link you generated yourself, your `UPLOAD_DIR` and the route handler may disagree on path conventions. Check that `UPLOAD_DIR` is what the `app` container thinks it is (set explicitly in compose).
 
@@ -113,11 +113,11 @@ If you're using a host-path bind mount instead, the files are on your filesystem
 
 The base versions in `package.json` are pinned to known-good ranges. If you bump a package (especially Prisma), you might need to bump its peer counterparts.
 
-Specifically: **`@auth/prisma-adapter@2.x` caps at Prisma 6**. Prisma 7 requires an adapter bump that hasn't shipped yet — that's why Prisma 7 is held back in this codebase.
+Specifically: **`@auth/prisma-adapter@2.11+` supports Prisma 7**. If you bump to a newer Prisma, check the adapter's peer-dependency range still includes it.
 
 ### `corepack enable` errors in Docker
 
-The `Dockerfile` uses `node:20-alpine` specifically because `corepack enable` returns exit 127 in BuildKit on `node:22-alpine` or newer. Don't bump the base image without first testing with `corepack` enabled — see `Dockerfile` for the verified-good combination.
+The `Dockerfile` uses `node:20-alpine` (current LTS) because newer images (node:25+) remove bundled corepack, so `corepack enable` fails the build. Don't bump the base image without testing the `corepack enable` step first.
 
 ### `Dockerfile` cache export errors in CI
 

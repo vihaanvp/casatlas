@@ -16,7 +16,16 @@ env:
 jobs:
   build-and-push:
     name: Build & Push to GHCR
-    runs-on: ubuntu-latest
+    # Build each architecture natively — QEMU-emulated arm64 builds
+    # intermittently crash (SIGILL) during Next.js's Turbopack page build.
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
 
@@ -48,6 +57,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ matrix.platform }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
