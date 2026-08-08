@@ -108,7 +108,9 @@ jobs:
         run: |
           TAGS="${{ steps.meta.outputs.tags }}"
           while IFS= read -r tag; do
+            # skip empty lines and the metadata-action '#' comment header
             [ -z "$tag" ] && continue
+            case "$tag" in \#*) continue ;; esac
             docker buildx imagetools create \
               -t "$tag" \
               "$tag-amd64" \
