@@ -70,7 +70,7 @@ jobs:
       # Push under per-platform tags only — pushing the shared tags directly
       # from two jobs races (last finisher overwrites the manifest list).
       - name: Build and push Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/Dockerfile
