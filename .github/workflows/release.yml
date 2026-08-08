@@ -14,17 +14,21 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push:
-    name: Build & Push to GHCR
+  build:
     # Build each architecture natively — QEMU-emulated arm64 builds
     # intermittently crash (SIGILL) during Next.js's Turbopack page build.
+    # Push under per-platform tags; a later merge job combines them so the
+    # final tags are real multi-arch manifest lists (see docker.yml).
     strategy:
+      fail-fast: false
       matrix:
         include:
           - runner: ubuntu-latest
             platform: linux/amd64
+            suffix: amd64
           - runner: ubuntu-24.04-arm
             platform: linux/arm64
+            suffix: arm64
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
@@ -55,15 +59,54 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}-${{ matrix.suffix }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ matrix.platform }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  merge:
+    name: Merge multi-arch manifests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Merge per-platform images into final tags
+        run: |
+          TAGS="${{ steps.meta.outputs.tags }}"
+          while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            docker buildx imagetools create \
+              -t "$tag" \
+              "$tag-amd64" \
+              "$tag-arm64"
+            echo "merged $tag"
+          done <<< "$TAGS"
+
   release:
     name: Create Release
-    needs: build-and-push
+    needs: merge
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
