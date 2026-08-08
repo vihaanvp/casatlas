@@ -55,19 +55,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // (matched by email) can still sign in. Registration state can be toggled
     // at runtime by an admin (DB override), falling back to the env default.
     async signIn({ user }) {
-      if (await isRegistrationOpen()) return true
       if (!user.email) return false
+      if (await isRegistrationOpen()) {
+        // Self-host bootstrap: the first account created becomes the ADMIN,
+        // so a fresh install has someone who can manage the instance.
+        const adminCount = await prisma.user.count({ where: { role: "ADMIN" } })
+        if (adminCount === 0) {
+          await prisma.user.update({
+            where: { email: user.email },
+            data: { role: "ADMIN" },
+          })
+        }
+        return true
+      }
       const existing = await prisma.user.findUnique({
         where: { email: user.email },
         select: { id: true },
       })
       return !!existing
     },
-    // Carry id/role from the DB user into the JWT on sign-in.
-    jwt({ token, user }) {
+    // Carry id/role from the DB user into the JWT on sign-in. Re-read the role
+    // from the DB rather than trusting the authorize() result, so the
+    // first-user-admin bootstrap (which promotes the role inside signIn(),
+    // after authorize() ran) is reflected immediately.
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
-        token.role = (user as { role?: string }).role
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { id: true, role: true },
+        })
+        if (dbUser) {
+          token.id = dbUser.id
+          token.role = dbUser.role
+        }
       }
       return token
     },
