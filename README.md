@@ -20,7 +20,7 @@
 
 CASAtlas is a self-hosted web application designed for IB Diploma Programme students to document, manage, and reflect on their CAS (Creativity, Activity, Service) experiences. It provides a clean, modern interface for tracking your CAS journey with teacher oversight and approval workflows.
 
-> **Current Status:** v0.1.0 Public Preview — core functionality is complete and stable. Teacher workflows, deployment improvements, and AI integrations are on the roadmap.
+> **Current Status:** v0.1.x Public Preview — core functionality is complete and stable. Teacher workflows, deployment improvements, and AI integrations are on the roadmap.
 
 ## Screenshots
 
@@ -93,14 +93,17 @@ The app ships as a multi-arch Docker image (linux/amd64 + linux/arm64) published
 git clone https://github.com/vihaanvp/CASAtlas.git
 cd CASAtlas/docker
 cp .env.example .env
-# Edit .env: set a real AUTH_SECRET (openssl rand -base64 32)
-# and OAuth credentials if you want social login.
+# Edit .env on THIS host:
+#   AUTH_SECRET      -> openssl rand -base64 32 (container refuses to boot without it)
+#   NEXT_PUBLIC_APP_URL -> exact public URL, e.g. http://192.168.1.50:3000 (OAuth + links break otherwise)
+#   OAuth credentials if you want social login. Leave AUTH_DEV_LOGIN=false.
+#   POSTGRES_PASSWORD if you want a non-default db password (first init only).
 
 # Pull the pre-built image and start (app + PostgreSQL)
 docker compose up -d
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000). Migrations run automatically on container start. Data persists in named volumes (`postgres_data`, `uploads_data`); nothing is lost on restart or `docker compose up -d`.
+The application will be available at your `NEXT_PUBLIC_APP_URL`. Migrations run automatically on container start. The **first account to sign in becomes ADMIN** — claim it immediately. Data persists in named volumes (`postgres_data`, `uploads_data`); back them up with your database. Nothing is lost on restart or `docker compose up -d`.
 
 **Build from source instead of pulling the image:**
 
@@ -165,7 +168,8 @@ CASAtlas is configured via environment variables. See [`.env.example`](.env.exam
 | `AUTH_URL` | Optional: canonical Auth.js URL if it differs from `NEXT_PUBLIC_APP_URL` (Auth.js v5 name; defaults to `NEXT_PUBLIC_APP_URL`) | — |
 | `ALLOW_REGISTRATION` | Enable public registration | `true` |
 | `AUTH_TRUST_HOST` | Trust the hostname Auth.js receives (`true` for proxies / non-localhost). **Production:** set it | `false` |
-| `AUTH_DEV_LOGIN` | Dev-only passwordless email login. **Never enable in production** | `false` |
+| `AUTH_DEV_LOGIN` | Dev-only passwordless email login. **Never enable in production** (container warns on stdout) | `false` |
+| `POSTGRES_PASSWORD` | Password for the bundled `db` service. First init only | `casatlas` |
 | `UPLOAD_DIR` | File upload directory | `./uploads` |
 | `WIKI_REPO` | Git remote for the GitHub wiki (used by `pnpm wiki:publish`) | `https://github.com/<owner>/<repo>.wiki.git` |
 

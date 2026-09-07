@@ -23,7 +23,7 @@ function generateId() {
 
 function useUpload({ experienceId, onUploadComplete }: UseUploadOptions) {
   const [files, setFiles] = useState<UploadFile[]>([])
-  const abortRefs = useRef<Map<string, AbortController>>(new Map())
+  const xhrRefs = useRef<Map<string, XMLHttpRequest>>(new Map())
 
   const uploadFile = useCallback(async (uploadFile: UploadFile) => {
     setFiles((prev) => prev.map((f) => f.id === uploadFile.id ? { ...f, status: "uploading", progress: 0 } : f))
@@ -32,11 +32,9 @@ function useUpload({ experienceId, onUploadComplete }: UseUploadOptions) {
     formData.append("file", uploadFile.file)
     formData.append("experienceId", experienceId)
 
-    const controller = new AbortController()
-    abortRefs.current.set(uploadFile.id, controller)
-
     try {
       const xhr = new XMLHttpRequest()
+      xhrRefs.current.set(uploadFile.id, xhr)
       const result = await new Promise<{ id: string; url: string; filename: string }>((resolve, reject) => {
         xhr.upload.addEventListener("progress", (e) => {
           if (e.lengthComputable) {
@@ -68,7 +66,7 @@ function useUpload({ experienceId, onUploadComplete }: UseUploadOptions) {
       setFiles((prev) => prev.map((f) => f.id === uploadFile.id ? { ...f, status: "error", error: message } : f))
       toast.error(`Failed to upload ${uploadFile.file.name}`)
     } finally {
-      abortRefs.current.delete(uploadFile.id)
+      xhrRefs.current.delete(uploadFile.id)
     }
   }, [experienceId, onUploadComplete])
 
@@ -96,11 +94,8 @@ function useUpload({ experienceId, onUploadComplete }: UseUploadOptions) {
   }, [uploadFile])
 
   const remove = useCallback((id: string) => {
-    const controller = abortRefs.current.get(id)
-    if (controller) {
-      controller.abort()
-      abortRefs.current.delete(id)
-    }
+    xhrRefs.current.get(id)?.abort()
+    xhrRefs.current.delete(id)
     setFiles((prev) => prev.filter((f) => f.id !== id))
   }, [])
 

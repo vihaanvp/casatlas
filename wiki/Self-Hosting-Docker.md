@@ -51,6 +51,10 @@ GITHUB_CLIENT_SECRET=
 
 > **Never commit `.env`.** It's already in `.gitignore`. Treat the values inside as database passwords.
 
+> ⛔ Leave `AUTH_DEV_LOGIN=false`. It enables passwordless sign-in as any user — dev convenience only. The container warns on stdout if you enable it.
+>
+> 🔑 `POSTGRES_PASSWORD` (default `casatlas`) applies on **first init only**. Changing it later won't rotate an existing `postgres_data` volume — if you must rotate, back up, `docker compose down -v`, set the new password (and matching `DATABASE_URL`), then restore. See [Operating CASAtlas](Operating-CASAtlas).
+
 For the full reference of every env var, see [Configuration](Configuration).
 
 ---
@@ -126,6 +130,8 @@ Then update `NEXT_PUBLIC_APP_URL` in `.env` accordingly and restart the app:
 ```bash
 docker compose up -d --force-recreate app
 ```
+
+> If you change `NEXT_PUBLIC_APP_URL` on a **locally built** image, rebuild too (`docker compose up -d --build`) — values baked under the `NEXT_PUBLIC_` prefix are compiled into the client bundle. The GHCR image reads it at runtime.
 
 ---
 

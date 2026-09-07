@@ -3,11 +3,10 @@
 #
 # Zero-config quick start (any Docker host):
 # git clone https://github.com/vihaanvp/CASAtlas.git
-# cd CASAtlas
-# cp .env.example .env
-# # Edit .env with your secrets (AUTH_SECRET, OAuth credentials, etc.)
-# docker compose up -d
-# Open http://localhost:3000
+# cp CASAtlas/docker/.env.example CASAtlas/docker/.env
+# # Edit CASAtlas/docker/.env: AUTH_SECRET, NEXT_PUBLIC_APP_URL, OAuth creds
+# cd CASAtlas/docker && docker compose up -d
+# Open http://<that-host>:3000
 #
 # Uses the pre-built image from GitHub Container Registry (multi-arch).
 # To build from source instead: `docker compose up -d --build`
@@ -61,7 +60,9 @@ services:
     environment:
       POSTGRES_DB: casatlas
       POSTGRES_USER: casatlas
-      POSTGRES_PASSWORD: casatlas
+      # Applies on first init only — changing it later won't rotate the
+      # password of an existing postgres_data volume (see README backup notes).
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-casatlas}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

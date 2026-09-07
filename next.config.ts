@@ -2,8 +2,10 @@ import type { NextConfig } from "next"
 
 const securityHeaders = [
   {
+    // SAMEORIGIN (not DENY): the in-app PDF <iframe> loads /api/files/*
+  // from the same origin. External framing is still blocked.
     key: "X-Frame-Options",
-    value: "DENY",
+    value: "SAMEORIGIN",
   },
   {
     key: "X-Content-Type-Options",
@@ -18,8 +20,11 @@ const securityHeaders = [
     value: "on",
   },
   {
+    // No `preload`: self-hosters on LAN IPs / shared domains must not get
+    // baked into the HSTS preload list. Enable preload only with your own
+    // HTTPS domain + reverse proxy in front.
     key: "Strict-Transport-Security",
-    value: "max-age=63072000; includeSubDomains; preload",
+    value: "max-age=63072000; includeSubDomains",
   },
   {
     key: "Permissions-Policy",
@@ -34,9 +39,11 @@ const securityHeaders = [
       "img-src 'self' https://lh3.googleusercontent.com https://avatars.githubusercontent.com data: blob:",
       "font-src 'self'",
       "connect-src 'self'",
-      "frame-ancestors 'none'",
+      // Same-origin framing for the evidence PDF preview iframe.
+      "frame-ancestors 'self'",
       "base-uri 'self'",
-      "form-action 'self'",
+      // OAuth sign-in posts to the providers after the same-origin Auth.js step.
+      "form-action 'self' https://accounts.google.com https://github.com",
     ].join("; "),
   },
 ]

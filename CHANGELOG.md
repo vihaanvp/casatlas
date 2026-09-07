@@ -5,6 +5,25 @@ All notable changes to CASAtlas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2-beta.1] - 2026-09-07
+
+### Added
+
+- **Evidence download + open-in-new-tab** buttons in the gallery lightbox (save-as uses the original filename)
+- **Docker startup guard** — the container refuses to boot with a missing/placeholder `AUTH_SECRET` and warns on `AUTH_DEV_LOGIN=true` or a localhost `NEXT_PUBLIC_APP_URL`
+- `POSTGRES_PASSWORD` is now configurable via `docker/.env` (first init only); documented in README + wiki
+- Unit tests for file-serving headers (`src/modules/uploads/file-headers.test.ts`)
+
+### Fixed
+
+- **PDF/image preview blocked** — `/api/files/*` no longer inherits `X-Frame-Options: DENY` / `frame-ancestors 'none'`; responses now send `SAMEORIGIN` / `frame-ancestors 'self'` with `Content-Disposition: inline`, `Content-Length`, and `Accept-Ranges: bytes`
+- **Private files publicly cacheable** — file responses changed from `Cache-Control: public` to `private`
+- **Path traversal** — `/api/files/[...path]` rejects `..`/empty segments and non-`{userId}/{experienceId}/{file}` keys with 404
+- **Upload cancel button** did nothing (dangling `AbortController`) — now aborts the in-flight `XMLHttpRequest`
+- CSP `form-action` now allows Google/GitHub OAuth hosts; HSTS `preload` dropped (unsafe for LAN/shared-domain hosts)
+- `docker-compose.yml` quick-start comment pointed at the wrong `.env` path; `NEXTAUTH_URL` (dead v4 name) removed from real `.env` files
+- Docs: corrected the 403 description in Troubleshooting, added preview/download + `AUTH_SECRET` FATAL sections, documented `AUTH_DEV_LOGIN`/`AUTH_TRUST_HOST`/`AUTH_URL`/`POSTGRES_PASSWORD` in Configuration
+
 ## [0.1.1] - 2026-08-08
 
 ### Added

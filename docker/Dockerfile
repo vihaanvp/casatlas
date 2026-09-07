@@ -61,5 +61,6 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # ---- run migrations then start the app ----
-# Use npx (available in runner) instead of pnpx
-CMD ["sh", "-c", "npx prisma migrate deploy && npx next start"]
+# Fail fast on missing secrets; warn on dev-only settings that must never
+# ship to a shared host (see docker/.env.example).
+CMD ["sh", "-c", "if [ -z \"$AUTH_SECRET\" ] || [ \"$AUTH_SECRET\" = \"replace-with-openssl-rand-base64-32\" ]; then echo 'FATAL: AUTH_SECRET is not set. Copy docker/.env.example to docker/.env and set a real value (openssl rand -base64 32).' >&2; exit 1; fi; if [ \"$AUTH_DEV_LOGIN\" = \"true\" ]; then echo 'WARNING: AUTH_DEV_LOGIN=true — passwordless dev login is enabled. Never use this in production.' >&2; fi; case \"$NEXT_PUBLIC_APP_URL\" in http://localhost*|http://127.0.0.1*) echo \"WARNING: NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL looks like a dev URL. Set it to the public URL of this host or OAuth callbacks and links will break.\" >&2;; esac; npx prisma migrate deploy && npx next start"]

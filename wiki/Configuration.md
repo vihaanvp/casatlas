@@ -73,6 +73,28 @@ ALLOW_REGISTRATION=false  # restrict to existing users only
 
 See [OAuth Setup](OAuth-Setup) for side effects.
 
+### `AUTH_DEV_LOGIN`
+Dev-only passwordless email login (sign in as **any** existing user by email).
+
+```bash
+AUTH_DEV_LOGIN=false  # default — keep this on any shared host
+```
+
+> ⛔ **Never `true` in production.** The container logs a loud warning if enabled. Flip it on only for local testing, and only in `docker/.env` on your own machine — never commit it.
+
+### `AUTH_TRUST_HOST`
+Auth.js v5 rejects untrusted hosts in production (`next start` / Docker).
+
+```bash
+AUTH_TRUST_HOST=true   # required in Docker / behind a reverse proxy
+```
+
+### `AUTH_URL` (optional)
+Canonical Auth.js URL, only if it differs from `NEXT_PUBLIC_APP_URL`. Defaults to `NEXT_PUBLIC_APP_URL`. The legacy v4 name `NEXTAUTH_URL` is **not** read — delete it if you still have it.
+
+### `POSTGRES_PASSWORD`
+Password for the bundled `db` service. Only applied on **first init** — changing it later does not rotate an existing `postgres_data` volume. Keep it in sync with `DATABASE_URL` (`postgresql://casatlas:PASSWORD@db:5432/casatlas`).
+
 ---
 
 ## Storage variables

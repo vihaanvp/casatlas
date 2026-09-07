@@ -41,6 +41,10 @@ docker compose logs app | grep -i 'database'
 
 ## Database problems
 
+### App container exits immediately, logs say `FATAL: AUTH_SECRET is not set`
+
+The entrypoint refuses to boot with a missing/placeholder secret. Copy `docker/.env.example` to `docker/.env` and set a real value (`openssl rand -base64 32`), then `docker compose up -d`.
+
 ### App container keeps restarting, logs say `Can't reach database server`
 
 The `app` container can't reach the `db` container. Two common causes:
@@ -95,9 +99,17 @@ Both need updating together if you change the limit.
 
 ### Upload fails with `403 Forbidden` immediately
 
-`/api/files/[...path]` enforces a **path-owner check** — the first path segment must equal the requesting user's ID. If you uploaded from a session A but try to download from session B, you'll get 403. This is by design.
+`/api/files/[...path]` checks access against the **experience ID** (second path segment, `{userId}/{experienceId}/{file}`): the requester must own the experience, be an assigned teacher, or be an admin. If you uploaded from account A but open the file as account B (unassigned), you'll get 403. This is by design.
 
-If you're getting 403 on a link you generated yourself, your `UPLOAD_DIR` and the route handler may disagree on path conventions. Check that `UPLOAD_DIR` is what the `app` container thinks it is (set explicitly in compose).
+If you're getting 403 on a file you uploaded yourself, your session likely expired — sign out and back in. If it persists, check that `UPLOAD_DIR` is what the `app` container thinks it is (`/app/uploads`, set explicitly in compose).
+
+### Uploaded images / PDFs won't preview or download
+
+Three past causes, all fixed — if you still hit this, check in order:
+
+1. **Blank PDF frame:** older images sent `X-Frame-Options: DENY` on `/api/files/*`, which blocks the in-app preview `<iframe>`. Fixed in current builds (route now sends `SAMEORIGIN` + `frame-ancestors 'self'`, and the global policy was relaxed to match). `docker compose pull && docker compose up -d` to get the fix.
+2. **No download button:** the evidence lightbox previously had no download affordance at all. Current builds have **Download** (saves with the original filename) and **Open in new tab** buttons in the lightbox header.
+3. **Stale/corrupt cache:** file responses are now `private, max-age=3600, immutable` with explicit `Content-Length` and `Accept-Ranges: bytes` (video seeking + PDF viewers need ranges). Hard-refresh (`Ctrl+Shift+R`) once after upgrading.
 
 ### Files vanish on container recreation
 

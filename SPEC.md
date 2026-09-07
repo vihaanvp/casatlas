@@ -4,6 +4,8 @@
 **Status:** Phase 0 — Architecture & Planning
 **Date:** 2026-07-11
 
+> **Note (post-v0.1.1):** the implementation has outgrown parts of this Phase-0 plan — `Role` (STUDENT/TEACHER/ADMIN), `Comment`, `Notification`, `AuditLog`, `TeacherStudent`, `AppConfig`, teacher/admin routes, search, and portfolio export are all shipped (see `prisma/schema.prisma`, `CHANGELOG.md`). Treat §7 "no roles for v1" and §10 disabled flags (`teacherDashboard/notifications/portfolioExport`) as superseded.
+
 ---
 
 ## Table of Contents
@@ -1423,7 +1425,7 @@ If a future feature requires complex client-side state (e.g., offline support, c
 
 - CSP headers via Next.js `headers()` config
 - `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY`
+- `X-Frame-Options: SAMEORIGIN` (DENY would block the same-origin evidence PDF `<iframe>`; `/api/files/*` additionally sends `frame-ancestors 'self'`)
 - `Referrer-Policy: strict-origin-when-cross-origin`
 
 ### Dependencies

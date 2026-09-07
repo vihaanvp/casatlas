@@ -4,7 +4,7 @@ import * as React from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { formatFileSize } from "@/lib/utils"
-import { Image as ImageIcon, Film, FileText, ExternalLink, X } from "lucide-react"
+import { Image as ImageIcon, Film, FileText, ExternalLink, X, Download } from "lucide-react"
 import type { Evidence } from "@prisma/client"
 
 type EvidencePick = Pick<Evidence, "id" | "type" | "url" | "filename" | "mimeType" | "size" | "thumbnailUrl"> & { createdAt: Date | string }
@@ -107,15 +107,40 @@ function Lightbox({
       onClick={onClose}
     >
       <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="absolute -top-2 -right-2 z-10 h-8 w-8 rounded-full bg-[var(--color-surface)] text-[var(--color-text-primary)] shadow-lg hover:bg-[var(--color-surface-hover)]"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="absolute -top-2 -right-2 z-10 flex gap-2">
+          <a
+            href={item.url}
+            download={item.type === "LINK" ? undefined : item.filename}
+            target={item.type === "LINK" ? "_blank" : undefined}
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-text-primary)] shadow-lg hover:bg-[var(--color-surface-hover)]"
+            aria-label={`Download ${item.filename}`}
+            title={`Download ${item.filename}`}
+          >
+            <Download className="h-4 w-4" />
+          </a>
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-text-primary)] shadow-lg hover:bg-[var(--color-surface-hover)]"
+            aria-label={`Open ${item.filename} in a new tab`}
+            title="Open in a new tab"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8 rounded-full bg-[var(--color-surface)] text-[var(--color-text-primary)] shadow-lg hover:bg-[var(--color-surface-hover)]"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
         {item.type === "IMAGE" && (
           <img src={item.url} alt={item.filename} className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain" />
